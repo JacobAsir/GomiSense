@@ -3,13 +3,17 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: GomiSense API - Japan waste sorting assistant
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: waste
+    description: Waste classification operations
+  - name: municipalities
+    description: Municipality rule profiles
 paths:
   /healthz:
     get:
@@ -24,6 +28,148 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /municipalities:
+    get:
+      operationId: getMunicipalities
+      tags: [municipalities]
+      summary: List supported municipalities
+      description: Returns all supported municipality profiles
+      responses:
+        "200":
+          description: List of municipalities
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MunicipalityListResponse"
+
+  /municipalities/{municipalityId}:
+    get:
+      operationId: getMunicipalityById
+      tags: [municipalities]
+      summary: Get municipality details
+      description: Returns full profile for a single municipality including categories and rules
+      parameters:
+        - name: municipalityId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Municipality details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MunicipalityProfile"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /classify-item:
+    post:
+      operationId: classifyItem
+      tags: [waste]
+      summary: Classify a waste item
+      description: >
+        Accepts text item name and/or municipality selection.
+        Returns deterministic disposal category with bilingual explanation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassifyItemRequest"
+      responses:
+        "200":
+          description: Classification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassifyItemResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /classify-image:
+    post:
+      operationId: classifyImage
+      tags: [waste]
+      summary: Classify a waste item from image
+      description: >
+        Accepts a base64 encoded image and municipality selection.
+        Runs deterministic image candidate matching against the rules engine.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassifyImageRequest"
+      responses:
+        "200":
+          description: Classification result with image candidates
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassifyItemResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /demo-samples:
+    get:
+      operationId: getDemoSamples
+      tags: [waste]
+      summary: Get demo item samples
+      description: Returns sample items for demo/testing purposes
+      parameters:
+        - name: municipalityId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Demo samples
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DemoSamplesResponse"
+
+  /search-items:
+    get:
+      operationId: searchItems
+      tags: [waste]
+      summary: Search for items by name
+      description: Returns matching items with their disposal categories for a municipality
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: municipalityId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchItemsResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +180,314 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: string
+      required:
+        - error
+
+    Municipality:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        nameJa:
+          type: string
+        prefecture:
+          type: string
+        prefectureJa:
+          type: string
+        collectionDays:
+          type: object
+          additionalProperties:
+            type: string
+        website:
+          type: string
+        hotline:
+          type: string
+      required:
+        - id
+        - name
+        - nameJa
+        - prefecture
+        - prefectureJa
+
+    MunicipalityListResponse:
+      type: object
+      properties:
+        municipalities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Municipality"
+      required:
+        - municipalities
+
+    DisposalCategory:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        nameJa:
+          type: string
+        color:
+          type: string
+        description:
+          type: string
+        descriptionJa:
+          type: string
+        collectionNote:
+          type: string
+        collectionNoteJa:
+          type: string
+      required:
+        - id
+        - name
+        - nameJa
+        - color
+
+    MunicipalityProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        nameJa:
+          type: string
+        prefecture:
+          type: string
+        prefectureJa:
+          type: string
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/DisposalCategory"
+        collectionDays:
+          type: object
+          additionalProperties:
+            type: string
+        website:
+          type: string
+        hotline:
+          type: string
+        fallbackGuidance:
+          type: string
+        fallbackGuidanceJa:
+          type: string
+      required:
+        - id
+        - name
+        - nameJa
+        - prefecture
+        - prefectureJa
+        - categories
+
+    ItemCandidate:
+      type: object
+      properties:
+        itemName:
+          type: string
+        itemNameJa:
+          type: string
+        confidence:
+          type: number
+        disposalCategory:
+          type: string
+        disposalCategoryJa:
+          type: string
+        matchReason:
+          type: string
+      required:
+        - itemName
+        - confidence
+        - disposalCategory
+        - disposalCategoryJa
+
+    ClassifyItemRequest:
+      type: object
+      properties:
+        municipalityId:
+          type: string
+        itemName:
+          type: string
+        language:
+          type: string
+          enum: [en, ja]
+          default: en
+      required:
+        - municipalityId
+        - itemName
+
+    ClassifyImageRequest:
+      type: object
+      properties:
+        municipalityId:
+          type: string
+        imageBase64:
+          type: string
+        mimeType:
+          type: string
+          default: image/jpeg
+        language:
+          type: string
+          enum: [en, ja]
+          default: en
+      required:
+        - municipalityId
+        - imageBase64
+
+    ClassifyItemResponse:
+      type: object
+      properties:
+        municipality:
+          type: string
+        itemName:
+          type: string
+        normalizedItem:
+          type: string
+        topCandidates:
+          type: array
+          items:
+            $ref: "#/components/schemas/ItemCandidate"
+        disposalCategory:
+          type: string
+        disposalCategoryJa:
+          type: string
+        disposalCategoryId:
+          type: string
+        categoryColor:
+          type: string
+        preparationSteps:
+          type: array
+          items:
+            type: string
+        preparationStepsJa:
+          type: array
+          items:
+            type: string
+        specialNotes:
+          type: array
+          items:
+            type: string
+        specialNotesJa:
+          type: array
+          items:
+            type: string
+        confidenceScore:
+          type: number
+        summaryEn:
+          type: string
+        summaryJa:
+          type: string
+        fallbackGuidance:
+          type: string
+        processingMode:
+          type: string
+          enum: [mock, live, fallback]
+        collectionDay:
+          type: string
+        collectionDayJa:
+          type: string
+      required:
+        - municipality
+        - itemName
+        - normalizedItem
+        - topCandidates
+        - disposalCategory
+        - disposalCategoryJa
+        - disposalCategoryId
+        - categoryColor
+        - preparationSteps
+        - preparationStepsJa
+        - specialNotes
+        - specialNotesJa
+        - confidenceScore
+        - summaryEn
+        - summaryJa
+        - processingMode
+
+    DemoSample:
+      type: object
+      properties:
+        itemName:
+          type: string
+        itemNameJa:
+          type: string
+        category:
+          type: string
+        categoryJa:
+          type: string
+        emoji:
+          type: string
+      required:
+        - itemName
+        - itemNameJa
+        - category
+        - categoryJa
+        - emoji
+
+    DemoSamplesResponse:
+      type: object
+      properties:
+        samples:
+          type: array
+          items:
+            $ref: "#/components/schemas/DemoSample"
+        municipalityId:
+          type: string
+      required:
+        - samples
+        - municipalityId
+
+    SearchResult:
+      type: object
+      properties:
+        itemName:
+          type: string
+        itemNameJa:
+          type: string
+        disposalCategory:
+          type: string
+        disposalCategoryJa:
+          type: string
+        disposalCategoryId:
+          type: string
+        categoryColor:
+          type: string
+        confidenceScore:
+          type: number
+      required:
+        - itemName
+        - itemNameJa
+        - disposalCategory
+        - disposalCategoryJa
+        - disposalCategoryId
+        - categoryColor
+        - confidenceScore
+
+    SearchItemsResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchResult"
+        query:
+          type: string
+        municipalityId:
+          type: string
+        totalResults:
+          type: integer
+      required:
+        - results
+        - query
+        - municipalityId
+        - totalResults
