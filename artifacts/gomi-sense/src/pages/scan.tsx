@@ -99,13 +99,35 @@ export default function Scan() {
 
   return (
     <div className="flex flex-col gap-6 pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between mb-2">
-        <Button variant="ghost" size="sm" onClick={() => setLocation("/")} className="px-0 hover:bg-transparent">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {language === "ja" ? "戻る" : "Back"}
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => setLocation("/")} className="shrink-0">
+          <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div className="bg-secondary text-secondary-foreground text-xs px-3 py-1 rounded-full font-medium">
-          {mode === "text" ? (language === "ja" ? "テキスト検索" : "Text Search") : (language === "ja" ? "画像判定" : "Image Classification")}
+        
+        {/* Top Tab Switcher */}
+        <div className="flex-1 bg-muted/50 p-1 rounded-xl flex gap-1 border border-border/50">
+          <button
+            onClick={() => setMode("text")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-bold transition-all ${
+              mode === "text" 
+                ? "bg-card text-primary shadow-sm ring-1 ring-border/20" 
+                : "text-muted-foreground hover:bg-card/50"
+            }`}
+          >
+            <Search className="h-4 w-4" />
+            {language === "ja" ? "テキスト" : "Text"}
+          </button>
+          <button
+            onClick={() => setMode("camera")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-bold transition-all ${
+              mode === "camera" 
+                ? "bg-card text-primary shadow-sm ring-1 ring-border/20" 
+                : "text-muted-foreground hover:bg-card/50"
+            }`}
+          >
+            <Camera className="h-4 w-4" />
+            {language === "ja" ? "カメラ" : "Camera"}
+          </button>
         </div>
       </div>
 
@@ -214,20 +236,6 @@ export default function Scan() {
         </div>
       )}
 
-      {/* Mode toggle at bottom */}
-      {!isClassifying && (
-        <div className="mt-auto pt-8 flex justify-center">
-          <Button 
-            variant="ghost" 
-            className="text-muted-foreground hover:text-foreground"
-            onClick={() => setMode(mode === "text" ? "camera" : "text")}
-          >
-            {mode === "text" 
-              ? (language === "ja" ? "カメラで判定する" : "Switch to Camera") 
-              : (language === "ja" ? "テキストで検索する" : "Switch to Text Search")}
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
