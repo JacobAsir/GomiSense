@@ -211,7 +211,7 @@ export function classifyItemText(
 export function classifyItemFromCandidates(
   itemCandidates: ItemLabelCandidate[],
   municipalityId: string,
-  source = "Gemini",
+  source = "AI",
 ): ClassificationResult {
   const municipality = getMunicipalityById(municipalityId);
 

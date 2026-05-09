@@ -61,11 +61,11 @@ function getModel() {
  * Normalizes the AI result to ensure it fits our interface.
  */
 function normalizeResult(data: any): AiIdentificationResult {
-  const candidates = Array.isArray(data?.candidates) 
+  const candidates = Array.isArray(data?.candidates)
     ? data.candidates.map((c: any) => ({
-        label: String(c.label || "unknown"),
-        confidence: Number(c.confidence || 0),
-      }))
+      label: String(c.label || "unknown"),
+      confidence: Number(c.confidence || 0),
+    }))
     : [];
 
   return {
@@ -104,9 +104,9 @@ async function generateStructuredIdentification(
   const result = await model.generateContent(parts);
   const response = await result.response;
   const text = response.text();
-  
+
   if (!text) {
-    throw new Error("Gemini returned an empty response.");
+    throw new Error("AI returned an empty response.");
   }
 
   return normalizeResult(parseJsonObject(text));

@@ -38,7 +38,7 @@ export default function Result() {
         </Button>
         {(lastResult.processingMode === "live" && confidenceScore < 100) && (
           <div className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider">
-            Gemini AI
+            AI Analysis
           </div>
         )}
       </div>

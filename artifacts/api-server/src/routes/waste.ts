@@ -76,7 +76,7 @@ router.post("/classify-item", async (req, res) => {
     const result = classifyItemFromCandidates(
       identification.candidates,
       municipalityId,
-      "Gemini text",
+      "AI text",
     );
     res.json(applyAiNotes(result, identification));
   } catch (err: unknown) {
@@ -111,14 +111,14 @@ router.post("/classify-image", async (req, res) => {
     const result = classifyItemFromCandidates(
       identification.candidates,
       municipalityId,
-      "Gemini vision",
+      "AI vision",
     );
     res.json(applyAiNotes(result, identification));
   } catch (err: any) {
     const message = err.message || "Image classification failed";
     const statusCode = err.status || 503;
     res.status(statusCode).json({
-      error: "Gemini image classification unavailable",
+      error: "AI image classification unavailable",
       details: message,
     });
   }
