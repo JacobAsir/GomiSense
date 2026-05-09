@@ -29,10 +29,7 @@ services:
       - key: NODE_VERSION
         value: 20
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: gomisense-backend
-          property: host
+        value: https://gomisense-backend.onrender.com
       - key: BASE_PATH
         value: /
     routes:
