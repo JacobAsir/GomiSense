@@ -33,7 +33,7 @@ services:
         fromService:
           type: web
           name: gomisense-backend
-          property: url
+          property: host
     routes:
       - type: rewrite
         source: /*
