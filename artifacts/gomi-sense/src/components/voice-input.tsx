@@ -54,15 +54,12 @@ export function VoiceInput({ onResult, disabled }: VoiceInputProps) {
       return;
     }
 
-    if (!recognitionRef.current) {
-      const recog = new SpeechRecognition();
-      recog.continuous = false;
-      recog.interimResults = false;
-      recognitionRef.current = recog;
-    }
-
-    const recognition = recognitionRef.current;
+    // Create a FRESH instance every time for better mobile compatibility
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
     recognition.lang = language === "ja" ? "ja-JP" : "en-US";
+    recognitionRef.current = recognition;
 
     recognition.onstart = () => {
       setIsListening(true);
@@ -70,7 +67,9 @@ export function VoiceInput({ onResult, disabled }: VoiceInputProps) {
 
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
-      onResult(transcript);
+      if (transcript) {
+        onResult(transcript);
+      }
       setIsListening(false);
     };
 
@@ -86,7 +85,12 @@ export function VoiceInput({ onResult, disabled }: VoiceInputProps) {
             : "Please enable microphone in settings and refresh the page.",
           variant: "destructive",
         });
-      } else if (event.error !== "no-speech") {
+      } else if (event.error === "no-speech") {
+        toast({
+          title: language === "ja" ? "聞き取れませんでした" : "Could not hear you",
+          description: language === "ja" ? "もう少しはっきり話しかけてください。" : "Please try speaking a bit louder or closer to the phone.",
+        });
+      } else {
         toast({
           title: language === "ja" ? "エラーが発生しました" : "Voice Error",
           description: event.error,
