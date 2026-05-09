@@ -2,6 +2,7 @@ import { useAppStore } from "@/lib/store";
 import { useGetMunicipalities } from "@workspace/api-client-react";
 import { Check, ChevronsUpDown, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FALLBACK_MUNICIPALITIES } from "@/data/fallback";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -23,7 +24,11 @@ export function MunicipalitySelector({ className }: { className?: string }) {
   const { data, isLoading } = useGetMunicipalities();
   const [open, setOpen] = useState(false);
 
-  const municipalities = data?.municipalities || [];
+  // Use fallback data if API is still loading or failed (common during Render cold starts)
+  const municipalities = (data?.municipalities && data.municipalities.length > 0) 
+    ? data.municipalities 
+    : FALLBACK_MUNICIPALITIES;
+    
   const selected = municipalities.find((m) => m.id === municipalityId);
 
   return (
@@ -34,7 +39,7 @@ export function MunicipalitySelector({ className }: { className?: string }) {
           role="combobox"
           aria-expanded={open}
           className={cn("w-full justify-between bg-card text-card-foreground border-input", className)}
-          disabled={isLoading}
+          // Removed disabled={isLoading} to allow fallback selection during cold starts
         >
           <div className="flex items-center gap-2 truncate">
             <MapPin className="h-4 w-4 shrink-0 text-primary" />

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VoiceInput } from "@/components/voice-input";
+import { FALLBACK_COMMON_ITEMS } from "@/data/fallback";
 
 export default function Home() {
   const { municipalityId, language } = useAppStore();
@@ -107,7 +108,32 @@ export default function Home() {
         </div>
         
         <div className="grid grid-cols-2 gap-3">
-          {demoLoading ? (
+          {((!demoData?.samples || demoData.samples.length === 0) && !demoLoading) ? (
+            // Use fallback items if API finished but returned nothing (or failed)
+            FALLBACK_COMMON_ITEMS.slice(0, 4).map((sample, i) => (
+              <Card 
+                key={i} 
+                className={`cursor-pointer transition-all hover:border-primary/40 hover:shadow-md ${!municipalityId ? 'opacity-50 pointer-events-none' : ''}`}
+                onClick={() => {
+                  if (municipalityId) {
+                    setLocation(`/scan?q=${encodeURIComponent(sample.itemName)}`);
+                  }
+                }}
+              >
+                <CardContent className="p-4 flex flex-col justify-between h-full">
+                  <div className="font-medium text-base mb-2">
+                    {language === "ja" ? sample.itemNameJa : sample.itemName}
+                  </div>
+                  <div className="flex justify-between items-center mt-auto">
+                    <span className="text-xs text-muted-foreground truncate mr-2">
+                      {language === "ja" ? "参考データ" : "Local Database"}
+                    </span>
+                    <ArrowRight className="h-4 w-4 text-primary shrink-0 opacity-50" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : demoLoading ? (
             Array(4).fill(0).map((_, i) => (
               <Skeleton key={i} className="h-24 rounded-xl w-full" />
             ))
