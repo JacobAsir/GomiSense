@@ -23,8 +23,8 @@ services:
     name: gomisense-frontend
     runtime: static
     plan: free
-    installCommand: npm install -g pnpm && pnpm install --no-frozen-lockfile
-    buildCommand: pnpm --filter @workspace/gomi-sense build
+    # Combine install and build into one command for Static Sites
+    buildCommand: npm install -g pnpm && pnpm install --no-frozen-lockfile && pnpm --filter @workspace/gomi-sense build
     staticPublishPath: ./artifacts/gomi-sense/dist
     envVars:
       - key: NODE_VERSION
