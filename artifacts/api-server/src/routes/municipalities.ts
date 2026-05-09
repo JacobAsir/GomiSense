@@ -5,7 +5,7 @@ import { GetMunicipalityByIdParams } from "@workspace/api-zod";
 const router: IRouter = Router();
 
 router.get("/municipalities", (_req, res) => {
-  const list = MUNICIPALITIES.map(({ id, name, nameJa, prefecture, prefectureJa, collectionDays, website, hotline }) => ({
+  const list = MUNICIPALITIES.map(({ id, name, nameJa, prefecture, prefectureJa, collectionDays, website }) => ({
     id,
     name,
     nameJa,
@@ -13,7 +13,6 @@ router.get("/municipalities", (_req, res) => {
     prefectureJa,
     collectionDays,
     website,
-    hotline,
   }));
   res.json({ municipalities: list });
 });

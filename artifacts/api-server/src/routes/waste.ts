@@ -1,32 +1,52 @@
 import { Router, type IRouter } from "express";
 import {
-  ClassifyItemBody,
   ClassifyImageBody,
+  ClassifyItemBody,
   GetDemoSamplesQueryParams,
   SearchItemsQueryParams,
 } from "@workspace/api-zod";
-import { classifyItemText, classifyItemFromImageCandidates, generateMockImageCandidates, searchItems } from "../rules/engine";
+import {
+  classifyItemFromCandidates,
+  classifyItemText,
+  searchItems,
+  getMunicipalityDirectory,
+  type ClassificationResult,
+} from "../rules/engine";
 import { MUNICIPALITIES } from "../rules/municipalities";
+import { identifyImageItem, identifyTextItem, type AiIdentificationResult } from "../services/gemini";
 
 const router: IRouter = Router();
 
-// Demo samples — representative items per municipality
 const DEMO_SAMPLES = [
-  { itemName: "PET bottle", itemNameJa: "ペットボトル", category: "PET Bottles", categoryJa: "ペットボトル", emoji: "🥤" },
-  { itemName: "Aluminum can", itemNameJa: "アルミ缶", category: "Cans / Metals", categoryJa: "缶・金属類", emoji: "🥫" },
-  { itemName: "Newspaper", itemNameJa: "新聞紙", category: "Paper / Cardboard", categoryJa: "紙類・段ボール", emoji: "📰" },
-  { itemName: "Battery", itemNameJa: "電池", category: "Hazardous / Special Disposal", categoryJa: "危険・特別ゴミ", emoji: "🔋" },
-  { itemName: "Spray can", itemNameJa: "スプレー缶", category: "Hazardous / Special Disposal", categoryJa: "危険・特別ゴミ", emoji: "🪣" },
-  { itemName: "Cardboard", itemNameJa: "段ボール", category: "Paper / Cardboard", categoryJa: "紙類・段ボール", emoji: "📦" },
-  { itemName: "Plastic packaging", itemNameJa: "プラスチック包装", category: "Plastic Packaging", categoryJa: "プラスチックゴミ", emoji: "🛍️" },
-  { itemName: "Glass bottle", itemNameJa: "ガラス瓶", category: "Glass", categoryJa: "ガラス類", emoji: "🍾" },
-  { itemName: "Ceramic cup", itemNameJa: "陶器のカップ", category: "Non-Burnable Waste", categoryJa: "燃えないゴミ", emoji: "☕" },
-  { itemName: "Sofa", itemNameJa: "ソファ", category: "Oversized Waste", categoryJa: "粗大ゴミ", emoji: "🛋️" },
-  { itemName: "Food waste", itemNameJa: "生ゴミ", category: "Burnable Waste", categoryJa: "燃えるゴミ", emoji: "🗑️" },
-  { itemName: "Smartphone", itemNameJa: "スマートフォン", category: "Hazardous / Special Disposal", categoryJa: "危険・特別ゴミ", emoji: "📱" },
+  { itemName: "PET bottle", itemNameJa: "PET bottle", category: "PET Bottles", categoryJa: "PET Bottles", emoji: "PET" },
+  { itemName: "Aluminum can", itemNameJa: "Aluminum can", category: "Cans / Metals", categoryJa: "Cans / Metals", emoji: "CAN" },
+  { itemName: "Newspaper", itemNameJa: "Newspaper", category: "Paper / Cardboard", categoryJa: "Paper / Cardboard", emoji: "PAPER" },
+  { itemName: "Battery", itemNameJa: "Battery", category: "Hazardous / Special Disposal", categoryJa: "Hazardous / Special Disposal", emoji: "BAT" },
+  { itemName: "Spray can", itemNameJa: "Spray can", category: "Hazardous / Special Disposal", categoryJa: "Hazardous / Special Disposal", emoji: "SPRAY" },
+  { itemName: "Cardboard", itemNameJa: "Cardboard", category: "Paper / Cardboard", categoryJa: "Paper / Cardboard", emoji: "BOX" },
+  { itemName: "Plastic packaging", itemNameJa: "Plastic packaging", category: "Plastic Packaging", categoryJa: "Plastic Packaging", emoji: "PLASTIC" },
+  { itemName: "Glass bottle", itemNameJa: "Glass bottle", category: "Glass", categoryJa: "Glass", emoji: "GLASS" },
+  { itemName: "Ceramic cup", itemNameJa: "Ceramic cup", category: "Non-Burnable Waste", categoryJa: "Non-Burnable Waste", emoji: "CUP" },
+  { itemName: "Sofa", itemNameJa: "Sofa", category: "Oversized Waste", categoryJa: "Oversized Waste", emoji: "SOFA" },
+  { itemName: "Food waste", itemNameJa: "Food waste", category: "Burnable Waste", categoryJa: "Burnable Waste", emoji: "FOOD" },
+  { itemName: "Smartphone", itemNameJa: "Smartphone", category: "Hazardous / Special Disposal", categoryJa: "Hazardous / Special Disposal", emoji: "PHONE" },
 ];
 
-router.post("/classify-item", (req, res) => {
+function applyAiNotes(
+  result: ClassificationResult,
+  identification: AiIdentificationResult,
+): ClassificationResult {
+  const useAiSummary = result.processingMode === "fallback" || result.confidenceScore < 0.7;
+  
+  return {
+    ...result,
+    summaryEn: (useAiSummary && identification.summaryEn) ? identification.summaryEn : result.summaryEn,
+    summaryJa: (useAiSummary && identification.summaryJa) ? identification.summaryJa : result.summaryJa,
+    processingMode: result.processingMode === "fallback" ? "fallback" : "live",
+  };
+}
+
+router.post("/classify-item", async (req, res) => {
   const parsed = ClassifyItemBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request body", details: parsed.error.message });
@@ -34,35 +54,72 @@ router.post("/classify-item", (req, res) => {
   }
 
   const { municipalityId, itemName } = parsed.data;
+  const municipality = MUNICIPALITIES.find(m => m.id === municipalityId);
 
   try {
-    const result = classifyItemText(itemName, municipalityId);
-    res.json(result);
+    // 1. Try local database first
+    const localResult = classifyItemText(itemName, municipalityId);
+    
+    // If we have a very high confidence local match (100% or close), return it immediately
+    // This saves AI costs and provides a cleaner UX for known items like "Newspaper"
+    if (localResult.confidenceScore >= 0.9) {
+      res.json({
+        ...localResult,
+        processingMode: "live", // Mark as live so AI UI is hidden
+      });
+      return;
+    }
+
+    // 2. Fallback to Gemini if local knowledge is insufficient
+    const categoryNames = municipality?.categories.map(c => c.name);
+    const identification = await identifyTextItem(itemName, municipality?.name, categoryNames);
+    const result = classifyItemFromCandidates(
+      identification.candidates,
+      municipalityId,
+      "Gemini text",
+    );
+    res.json(applyAiNotes(result, identification));
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Classification failed";
-    res.status(400).json({ error: message });
+    try {
+      const fallbackResult = classifyItemText(itemName, municipalityId);
+      res.json(fallbackResult);
+    } catch (fallbackErr: unknown) {
+      const message =
+        fallbackErr instanceof Error
+          ? fallbackErr.message
+          : err instanceof Error
+            ? err.message
+            : "Classification failed";
+      res.status(400).json({ error: message });
+    }
   }
 });
 
-router.post("/classify-image", (req, res) => {
+router.post("/classify-image", async (req, res) => {
   const parsed = ClassifyImageBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request body", details: parsed.error.message });
     return;
   }
 
-  const { municipalityId, imageBase64 } = parsed.data;
+  const { municipalityId, imageBase64, mimeType } = parsed.data;
+  const municipality = MUNICIPALITIES.find(m => m.id === municipalityId);
 
   try {
-    // Generate image candidates (mock mode — no vision API required)
-    const imageCandidates = generateMockImageCandidates(imageBase64);
-
-    // Run through deterministic rules engine
-    const result = classifyItemFromImageCandidates(imageCandidates, municipalityId);
-    res.json(result);
+    const categoryNames = municipality?.categories.map(c => c.name);
+    const identification = await identifyImageItem(imageBase64, mimeType, municipality?.name, categoryNames);
+    const result = classifyItemFromCandidates(
+      identification.candidates,
+      municipalityId,
+      "Gemini vision",
+    );
+    res.json(applyAiNotes(result, identification));
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Image classification failed";
-    res.status(400).json({ error: message });
+    res.status(503).json({
+      error: "Gemini image classification unavailable",
+      details: message,
+    });
   }
 });
 
@@ -70,9 +127,8 @@ router.get("/demo-samples", (req, res) => {
   const parsed = GetDemoSamplesQueryParams.safeParse(req.query);
   const municipalityId = parsed.success ? parsed.data.municipalityId : undefined;
 
-  // Validate municipality exists if provided
   if (municipalityId) {
-    const exists = MUNICIPALITIES.some((m) => m.id === municipalityId);
+    const exists = MUNICIPALITIES.some((municipality) => municipality.id === municipalityId);
     if (!exists) {
       res.status(404).json({ error: "Municipality not found" });
       return;
@@ -85,6 +141,17 @@ router.get("/demo-samples", (req, res) => {
   });
 });
 
+router.get("/directory", (req, res) => {
+  const municipalityId = req.query.municipalityId as string;
+  if (!municipalityId) {
+    res.status(400).json({ error: "municipalityId is required" });
+    return;
+  }
+
+  const items = getMunicipalityDirectory(municipalityId);
+  res.json({ items });
+});
+
 router.get("/search-items", (req, res) => {
   const parsed = SearchItemsQueryParams.safeParse(req.query);
   if (!parsed.success) {
@@ -93,7 +160,6 @@ router.get("/search-items", (req, res) => {
   }
 
   const { q, municipalityId } = parsed.data;
-
   const results = searchItems(q, municipalityId);
 
   res.json({

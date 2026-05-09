@@ -10,6 +10,7 @@ import Scan from "@/pages/scan";
 import Result from "@/pages/result";
 import HowItWorks from "@/pages/how-it-works";
 import Municipalities from "@/pages/municipalities";
+import Directory from "@/pages/directory";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -28,6 +29,7 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/scan" component={Scan} />
         <Route path="/result" component={Result} />
+        <Route path="/directory" component={Directory} />
         <Route path="/how-it-works" component={HowItWorks} />
         <Route path="/municipalities" component={Municipalities} />
         <Route component={NotFound} />

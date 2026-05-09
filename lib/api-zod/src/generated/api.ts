@@ -106,7 +106,7 @@ export const ClassifyItemResponse = zod.object({
   summaryEn: zod.string(),
   summaryJa: zod.string(),
   fallbackGuidance: zod.string().optional(),
-  processingMode: zod.enum(["mock", "live", "fallback"]),
+  processingMode: zod.enum(["live", "fallback"]),
   collectionDay: zod.string().optional(),
   collectionDayJa: zod.string().optional(),
 });
@@ -152,7 +152,7 @@ export const ClassifyImageResponse = zod.object({
   summaryEn: zod.string(),
   summaryJa: zod.string(),
   fallbackGuidance: zod.string().optional(),
-  processingMode: zod.enum(["mock", "live", "fallback"]),
+  processingMode: zod.enum(["live", "fallback"]),
   collectionDay: zod.string().optional(),
   collectionDayJa: zod.string().optional(),
 });

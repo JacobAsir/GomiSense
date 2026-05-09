@@ -10,7 +10,6 @@ export type ClassifyItemResponseProcessingMode =
   (typeof ClassifyItemResponseProcessingMode)[keyof typeof ClassifyItemResponseProcessingMode];
 
 export const ClassifyItemResponseProcessingMode = {
-  mock: "mock",
   live: "live",
   fallback: "fallback",
 } as const;

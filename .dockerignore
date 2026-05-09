@@ -1,0 +1,17 @@
+node_modules
+.pnpm-store
+artifacts/gomi-sense/node_modules
+artifacts/api-server/node_modules
+artifacts/gomi-sense/dist
+artifacts/api-server/dist
+.git
+.env
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.replit
+.replitignore
+replit.md
+venv
+mockup-sandbox

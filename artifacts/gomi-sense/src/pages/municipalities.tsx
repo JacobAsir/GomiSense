@@ -1,6 +1,6 @@
 import { useAppStore } from "@/lib/store";
 import { useGetMunicipalities } from "@workspace/api-client-react";
-import { MapPin, ExternalLink, Phone, Building2 } from "lucide-react";
+import { MapPin, ExternalLink, Building2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -57,18 +57,10 @@ export default function Municipalities() {
                   
                   <div className="flex flex-wrap gap-2">
                     {municipality.website && (
-                      <Button variant="outline" size="sm" className="h-8 text-xs" asChild>
+                      <Button variant="outline" size="sm" className="h-8 text-xs w-full" asChild>
                         <a href={municipality.website} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="mr-1.5 h-3 w-3" />
                           {language === "ja" ? "公式サイト" : "Website"}
-                        </a>
-                      </Button>
-                    )}
-                    {municipality.hotline && (
-                      <Button variant="outline" size="sm" className="h-8 text-xs" asChild>
-                        <a href={`tel:${municipality.hotline}`}>
-                          <Phone className="mr-1.5 h-3 w-3" />
-                          {municipality.hotline}
                         </a>
                       </Button>
                     )}

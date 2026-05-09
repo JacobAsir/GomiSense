@@ -24,7 +24,6 @@ export interface Municipality {
   prefectureJa: string;
   collectionDays?: MunicipalityCollectionDays;
   website?: string;
-  hotline?: string;
 }
 
 export interface MunicipalityListResponse {
@@ -53,7 +52,6 @@ export interface MunicipalityProfile {
   categories: DisposalCategory[];
   collectionDays?: MunicipalityProfileCollectionDays;
   website?: string;
-  hotline?: string;
   fallbackGuidance?: string;
   fallbackGuidanceJa?: string;
 }
@@ -100,7 +98,6 @@ export type ClassifyItemResponseProcessingMode =
   (typeof ClassifyItemResponseProcessingMode)[keyof typeof ClassifyItemResponseProcessingMode];
 
 export const ClassifyItemResponseProcessingMode = {
-  mock: "mock",
   live: "live",
   fallback: "fallback",
 } as const;
@@ -157,11 +154,28 @@ export interface SearchItemsResponse {
   totalResults: number;
 }
 
+export interface DirectoryItem {
+  itemName: string;
+  itemNameJa: string;
+  disposalCategory: string;
+  disposalCategoryJa: string;
+  disposalCategoryId: string;
+  categoryColor: string;
+}
+
+export interface DirectoryResponse {
+  items: DirectoryItem[];
+}
+
 export type GetDemoSamplesParams = {
   municipalityId?: string;
 };
 
 export type SearchItemsParams = {
   q: string;
+  municipalityId: string;
+};
+
+export type GetDirectoryParams = {
   municipalityId: string;
 };

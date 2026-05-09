@@ -21,5 +21,7 @@ app.listen(port, (err) => {
     process.exit(1);
   }
 
-  logger.info({ port }, "Server listening");
+  logger.info({ port }, `Server listening at http://localhost:${port}`);
+  logger.info(`API endpoints available at http://localhost:${port}/api`);
+  logger.info(`Swagger documentation available at http://localhost:${port}/api/docs`);
 });

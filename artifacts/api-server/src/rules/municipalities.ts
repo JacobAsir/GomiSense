@@ -31,7 +31,6 @@ export interface MunicipalityProfile {
   categories: DisposalCategory[];
   collectionDays: Record<string, string>;
   website: string;
-  hotline: string;
   fallbackGuidance: string;
   fallbackGuidanceJa: string;
   items: ItemRule[];
@@ -652,9 +651,8 @@ export const MUNICIPALITIES: MunicipalityProfile[] = [
       paper: "Wednesday",
     },
     website: "https://www.city.shibuya.tokyo.jp/kurashi/gomi/",
-    hotline: "03-3463-1211",
-    fallbackGuidance: "When in doubt, contact Shibuya Ward at 03-3463-1211 or visit the ward office.",
-    fallbackGuidanceJa: "不明な場合は渋谷区（03-3463-1211）または区役所にお問い合わせください。",
+    fallbackGuidance: "When in doubt, visit the Shibuya Ward office or their official website.",
+    fallbackGuidanceJa: "不明な場合は渋谷区役所にお問い合わせいただくか、公式サイトをご確認ください。",
     categories: [
       COMMON_CATEGORIES.burnable,
       COMMON_CATEGORIES.nonBurnable,
@@ -684,9 +682,8 @@ export const MUNICIPALITIES: MunicipalityProfile[] = [
       paper: "2nd and 4th Wednesday",
     },
     website: "https://www.city.osaka.lg.jp/kankyo/category/3706-0-0-0-0-0-0-0-0-0.html",
-    hotline: "06-6630-3347",
-    fallbackGuidance: "When in doubt, contact Osaka City at 06-6630-3347 or visit city.osaka.lg.jp",
-    fallbackGuidanceJa: "不明な場合は大阪市（06-6630-3347）またはcity.osaka.lg.jpにお問い合わせください。",
+    fallbackGuidance: "When in doubt, visit city.osaka.lg.jp for official waste sorting guidance.",
+    fallbackGuidanceJa: "不明な場合は大阪市の公式サイト（city.osaka.lg.jp）をご確認ください。",
     categories: [
       COMMON_CATEGORIES.burnable,
       COMMON_CATEGORIES.nonBurnable,
@@ -731,9 +728,8 @@ export const MUNICIPALITIES: MunicipalityProfile[] = [
       paper: "Every Saturday (neighborhood collection)",
     },
     website: "https://www.city.kyoto.lg.jp/kankyo/page/0000025016.html",
-    hotline: "075-213-4930",
-    fallbackGuidance: "When in doubt, contact Kyoto City at 075-213-4930 or visit the website.",
-    fallbackGuidanceJa: "不明な場合は京都市（075-213-4930）にお問い合わせください。",
+    fallbackGuidance: "When in doubt, visit the Kyoto City website for more details.",
+    fallbackGuidanceJa: "不明な場合は京都市の公式サイトをご確認ください。",
     categories: [
       COMMON_CATEGORIES.burnable,
       COMMON_CATEGORIES.nonBurnable,
@@ -763,9 +759,8 @@ export const MUNICIPALITIES: MunicipalityProfile[] = [
       paper: "Wednesday",
     },
     website: "https://www.city.yokohama.lg.jp/kurashi/machizukuri-kankyo/gomi-recycle/",
-    hotline: "045-671-3816",
-    fallbackGuidance: "When in doubt, contact Yokohama City at 045-671-3816.",
-    fallbackGuidanceJa: "不明な場合は横浜市（045-671-3816）にお問い合わせください。",
+    fallbackGuidance: "When in doubt, visit the Yokohama City official website.",
+    fallbackGuidanceJa: "不明な場合は横浜市の公式サイトをご確認ください。",
     categories: [
       COMMON_CATEGORIES.burnable,
       COMMON_CATEGORIES.nonBurnable,
@@ -795,9 +790,8 @@ export const MUNICIPALITIES: MunicipalityProfile[] = [
       paper: "2nd and 4th Saturday",
     },
     website: "https://www.city.fukuoka.lg.jp/kankyo/3r/life/gomi/",
-    hotline: "092-711-4346",
-    fallbackGuidance: "When in doubt, contact Fukuoka City at 092-711-4346.",
-    fallbackGuidanceJa: "不明な場合は福岡市（092-711-4346）にお問い合わせください。",
+    fallbackGuidance: "When in doubt, visit the Fukuoka City official website.",
+    fallbackGuidanceJa: "不明な場合は福岡市の公式サイトをご確認ください。",
     categories: [
       COMMON_CATEGORIES.burnable,
       COMMON_CATEGORIES.nonBurnable,

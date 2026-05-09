@@ -104,7 +104,8 @@ paths:
       summary: Classify a waste item from image
       description: >
         Accepts a base64 encoded image and municipality selection.
-        Runs deterministic image candidate matching against the rules engine.
+        Uses Gemini Vision to identify item candidates, then matches those candidates
+        against the municipality rules engine.
       requestBody:
         required: true
         content:
@@ -170,6 +171,26 @@ paths:
               schema:
                 $ref: "#/components/schemas/SearchItemsResponse"
 
+  /directory:
+    get:
+      operationId: getDirectory
+      tags: [waste]
+      summary: Get full item directory
+      description: Returns all known items for a municipality
+      parameters:
+        - name: municipalityId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Directory items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DirectoryResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -208,8 +229,6 @@ components:
           additionalProperties:
             type: string
         website:
-          type: string
-        hotline:
           type: string
       required:
         - id
@@ -275,8 +294,6 @@ components:
           additionalProperties:
             type: string
         website:
-          type: string
-        hotline:
           type: string
         fallbackGuidance:
           type: string
@@ -391,7 +408,7 @@ components:
           type: string
         processingMode:
           type: string
-          enum: [mock, live, fallback]
+          enum: [live, fallback]
         collectionDay:
           type: string
         collectionDayJa:
@@ -491,3 +508,36 @@ components:
         - query
         - municipalityId
         - totalResults
+
+    DirectoryItem:
+      type: object
+      properties:
+        itemName:
+          type: string
+        itemNameJa:
+          type: string
+        disposalCategory:
+          type: string
+        disposalCategoryJa:
+          type: string
+        disposalCategoryId:
+          type: string
+        categoryColor:
+          type: string
+      required:
+        - itemName
+        - itemNameJa
+        - disposalCategory
+        - disposalCategoryJa
+        - disposalCategoryId
+        - categoryColor
+
+    DirectoryResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/DirectoryItem"
+      required:
+        - items

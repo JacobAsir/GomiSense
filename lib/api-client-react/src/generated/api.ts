@@ -28,6 +28,9 @@ import type {
   MunicipalityProfile,
   SearchItemsParams,
   SearchItemsResponse,
+  DirectoryItem,
+  DirectoryResponse,
+  GetDirectoryParams,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -645,6 +648,100 @@ export function useSearchItems<
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getSearchItemsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+/**
+ * Returns all known items for a municipality
+ * @summary Get full item directory
+ */
+export const getGetDirectoryUrl = (params: GetDirectoryParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/directory?${stringifiedParams}`
+    : `/api/directory`;
+};
+
+export const getDirectory = async (
+  params: GetDirectoryParams,
+  options?: RequestInit,
+): Promise<DirectoryResponse> => {
+  return customFetch<DirectoryResponse>(getGetDirectoryUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetDirectoryQueryKey = (params?: GetDirectoryParams) => {
+  return [`/api/directory`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetDirectoryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDirectory>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetDirectoryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getDirectory>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetDirectoryQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getDirectory>>> = ({
+    signal,
+  }) => getDirectory(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDirectory>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetDirectoryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDirectory>>
+>;
+export type GetDirectoryQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get full item directory
+ */
+
+export function useGetDirectory<
+  TData = Awaited<ReturnType<typeof getDirectory>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetDirectoryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getDirectory>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetDirectoryQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

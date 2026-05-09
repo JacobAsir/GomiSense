@@ -6,6 +6,7 @@ import { Search, Camera, ArrowRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VoiceInput } from "@/components/voice-input";
 
 export default function Home() {
   const { municipalityId, language } = useAppStore();
@@ -45,35 +46,45 @@ export default function Home() {
         )}
       </section>
 
-      {/* Actions */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Button
-          className="h-20 text-lg rounded-xl shadow-sm gap-3 justify-start px-6 bg-primary hover:bg-primary/90 hover:-translate-y-1 transition-all"
-          disabled={!municipalityId}
-          onClick={() => setLocation("/scan")}
-        >
-          <Search className="h-6 w-6" />
-          <div className="flex flex-col items-start">
-            <span className="font-bold">{language === "ja" ? "テキスト検索" : "Text Search"}</span>
-            <span className="text-xs font-normal opacity-80">
-              {language === "ja" ? "名前で調べる" : "Type item name"}
-            </span>
+      {/* Unified Search & Actions */}
+      <section className="flex flex-col gap-4">
+        <div className="flex gap-2 relative">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder={language === "ja" ? "何を捨てますか？" : "What do you want to dispose of?"}
+              className="w-full pl-10 pr-12 h-14 text-lg rounded-2xl border bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm transition-all disabled:opacity-50"
+              disabled={!municipalityId}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
+                  setLocation(`/scan?q=${encodeURIComponent((e.target as HTMLInputElement).value.trim())}`);
+                }
+              }}
+              onClick={() => {
+                if (!municipalityId) return;
+                // Don't redirect immediately on click to allow typing
+              }}
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <VoiceInput 
+                onResult={(text) => {
+                  setLocation(`/scan?q=${encodeURIComponent(text)}`);
+                }}
+                disabled={!municipalityId}
+              />
+            </div>
           </div>
-        </Button>
+        </div>
 
         <Button
           variant="outline"
-          className="h-20 text-lg rounded-xl shadow-sm gap-3 justify-start px-6 border-primary/20 hover:border-primary/50 hover:bg-secondary/50 hover:-translate-y-1 transition-all"
+          className="h-16 text-lg rounded-2xl shadow-sm gap-3 border-primary/20 hover:border-primary/50 hover:bg-secondary/50 transition-all w-full"
           disabled={!municipalityId}
           onClick={() => setLocation("/scan?mode=camera")}
         >
           <Camera className="h-6 w-6 text-primary" />
-          <div className="flex flex-col items-start text-foreground">
-            <span className="font-bold">{language === "ja" ? "カメラで検索" : "Camera Scan"}</span>
-            <span className="text-xs font-normal text-muted-foreground">
-              {language === "ja" ? "写真を撮って判定" : "Take a photo"}
-            </span>
-          </div>
+          <span className="font-bold">{language === "ja" ? "カメラで検索" : "Scan with Camera"}</span>
         </Button>
       </section>
 
@@ -83,6 +94,16 @@ export default function Home() {
           <h2 className="text-lg font-bold">
             {language === "ja" ? "よく調べられるアイテム" : "Commonly Searched"}
           </h2>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-primary hover:text-primary/80 h-auto py-1 px-2"
+            disabled={!municipalityId}
+            onClick={() => setLocation("/directory")}
+          >
+            {language === "ja" ? "すべて見る" : "View All"}
+            <ArrowRight className="ml-1 h-3 w-3" />
+          </Button>
         </div>
         
         <div className="grid grid-cols-2 gap-3">

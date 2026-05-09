@@ -28,6 +28,8 @@ node_modules
 !.vscode/extensions.json
 
 # misc
+.env*
+.npmrc
 /.sass-cache
 /connect.lock
 /coverage
@@ -41,9 +43,30 @@ testem.log
 .DS_Store
 Thumbs.db
 
-.cursor/rules/nx-rules.mdc
-.github/instructions/nx.instructions.md
+# Tools
+.pnpm-store
+.vercel
+.render
+.turbo
+.next
+.contentlayer
+.cache
 
-# Replit
-.cache/
+# Sensitive
+*.pem
+*.key
+auth_token*
+secrets.json
+
+# Replit cleanup
+.replit
+.replitignore
+replit.md
 .local/
+
+# Project Specific
+artifacts/**/dist
+artifacts/**/node_modules
+lib/**/node_modules
+venv/
+mockup-sandbox/

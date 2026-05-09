@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAppStore } from "@/lib/store";
-import { ArrowLeft, CheckCircle2, AlertTriangle, CalendarDays, ExternalLink, Info, PhoneCall } from "lucide-react";
+import { ArrowLeft, CheckCircle2, AlertTriangle, CalendarDays, ExternalLink, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryBadge } from "@/components/category-badge";
 import { Progress } from "@/components/ui/progress";
@@ -25,7 +25,7 @@ export default function Result() {
   if (!lastResult) return null;
 
   const confidenceScore = lastResult.confidenceScore * 100;
-  const isLowConfidence = lastResult.confidenceScore < 0.3 || lastResult.processingMode === "fallback";
+  const isLowConfidence = lastResult.confidenceScore < 0.3;
   const steps = language === "ja" ? lastResult.preparationStepsJa : lastResult.preparationSteps;
   const notes = language === "ja" ? lastResult.specialNotesJa : lastResult.specialNotes;
 
@@ -36,9 +36,9 @@ export default function Result() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           {language === "ja" ? "別のアイテムを調べる" : "Search another item"}
         </Button>
-        {lastResult.processingMode === "mock" && (
-          <div className="bg-orange-100 text-orange-800 text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider">
-            Mock Mode
+        {(lastResult.processingMode === "live" && confidenceScore < 100) && (
+          <div className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider">
+            Gemini AI
           </div>
         )}
       </div>
@@ -51,15 +51,8 @@ export default function Result() {
           </AlertTitle>
           <AlertDescription className="mt-2 text-sm leading-relaxed">
             {language === "ja" 
-              ? (lastResult.fallbackGuidance || "市役所に直接お問い合わせいただくか、より具体的な名前で再度お試しください。") 
-              : (lastResult.fallbackGuidance || "Please contact your municipality directly or try again with a more specific name.")}
-            
-            {municipality?.hotline && (
-              <div className="mt-3 flex items-center gap-2 font-medium bg-background/50 p-2 rounded-md">
-                <PhoneCall className="h-4 w-4" />
-                <a href={`tel:${municipality.hotline}`} className="hover:underline">{municipality.hotline}</a>
-              </div>
-            )}
+              ? (lastResult.fallbackGuidance || "詳細については自治体の公式サイトをご確認ください。") 
+              : (lastResult.fallbackGuidance || "Please check the official municipality website for more information.")}
           </AlertDescription>
         </Alert>
       )}
@@ -94,21 +87,23 @@ export default function Result() {
           </p>
         </div>
 
-        {/* Confidence Meter */}
-        <div className="px-6 py-4 bg-muted/30 border-t flex flex-col gap-2">
-          <div className="flex justify-between items-center text-xs font-medium text-muted-foreground">
-            <span>{language === "ja" ? "AI判定の自信度" : "AI Confidence"}</span>
-            <span>{Math.round(confidenceScore)}%</span>
+        {/* Confidence Meter - Only show if not 100% (to hide for perfect/known matches) */}
+        {confidenceScore < 100 && (
+          <div className="px-6 py-4 bg-muted/30 border-t flex flex-col gap-2">
+            <div className="flex justify-between items-center text-xs font-medium text-muted-foreground">
+              <span>{language === "ja" ? "AI判定の自信度" : "AI Confidence"}</span>
+              <span>{Math.round(confidenceScore)}%</span>
+            </div>
+            <Progress 
+              value={confidenceScore} 
+              className="h-2" 
+              indicatorColor={
+                confidenceScore > 80 ? "bg-green-500" : 
+                confidenceScore > 40 ? "bg-yellow-500" : "bg-red-500"
+              } 
+            />
           </div>
-          <Progress 
-            value={confidenceScore} 
-            className="h-2" 
-            indicatorColor={
-              confidenceScore > 80 ? "bg-green-500" : 
-              confidenceScore > 40 ? "bg-yellow-500" : "bg-red-500"
-            } 
-          />
-        </div>
+        )}
       </div>
 
       {/* Collection Day Info */}
