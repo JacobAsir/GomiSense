@@ -36,12 +36,27 @@ function applyAiNotes(
   result: ClassificationResult,
   identification: AiIdentificationResult,
 ): ClassificationResult {
-  const useAiSummary = result.processingMode === "fallback" || result.confidenceScore < 0.7;
+  // Use AI data if the local match is weak or it's a pure fallback
+  const useAiData = result.processingMode === "fallback" || result.confidenceScore < 0.6;
   
   return {
     ...result,
-    summaryEn: (useAiSummary && identification.summaryEn) ? identification.summaryEn : result.summaryEn,
-    summaryJa: (useAiSummary && identification.summaryJa) ? identification.summaryJa : result.summaryJa,
+    disposalCategory: (useAiData && identification.disposalCategory) ? identification.disposalCategory : result.disposalCategory,
+    disposalCategoryJa: (useAiData && identification.disposalCategoryJa) ? identification.disposalCategoryJa : result.disposalCategoryJa,
+    summaryEn: (useAiData && identification.summaryEn) ? identification.summaryEn : result.summaryEn,
+    summaryJa: (useAiData && identification.summaryJa) ? identification.summaryJa : result.summaryJa,
+    preparationSteps: (useAiData && identification.preparationSteps && identification.preparationSteps.length > 0) 
+      ? identification.preparationSteps 
+      : result.preparationSteps,
+    preparationStepsJa: (useAiData && identification.preparationStepsJa && identification.preparationStepsJa.length > 0)
+      ? identification.preparationStepsJa
+      : result.preparationStepsJa,
+    specialNotes: (useAiData && identification.specialNotes && identification.specialNotes.length > 0)
+      ? identification.specialNotes
+      : result.specialNotes,
+    specialNotesJa: (useAiData && identification.specialNotesJa && identification.specialNotesJa.length > 0)
+      ? identification.specialNotesJa
+      : result.specialNotesJa,
     processingMode: result.processingMode === "fallback" ? "fallback" : "live",
   };
 }

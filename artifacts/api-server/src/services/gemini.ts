@@ -9,6 +9,12 @@ export interface AiIdentificationResult {
   candidates: AiItemCandidate[];
   summaryEn?: string;
   summaryJa?: string;
+  disposalCategory?: string;
+  disposalCategoryJa?: string;
+  preparationSteps?: string[];
+  preparationStepsJa?: string[];
+  specialNotes?: string[];
+  specialNotesJa?: string[];
 }
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
@@ -41,8 +47,36 @@ const responseSchema = {
       type: SchemaType.STRING,
       description: "A 1-2 sentence Japanese summary of the identified item and why it belongs to the top candidate category.",
     },
+    disposalCategory: {
+      type: SchemaType.STRING,
+      description: "The most likely English disposal category.",
+    },
+    disposalCategoryJa: {
+      type: SchemaType.STRING,
+      description: "The most likely Japanese disposal category (e.g., 燃えるゴミ, 粗大ゴミ).",
+    },
+    preparationSteps: {
+      type: SchemaType.ARRAY,
+      items: { type: SchemaType.STRING },
+      description: "Specific preparation steps in English.",
+    },
+    preparationStepsJa: {
+      type: SchemaType.ARRAY,
+      items: { type: SchemaType.STRING },
+      description: "Specific preparation steps in Japanese.",
+    },
+    specialNotes: {
+      type: SchemaType.ARRAY,
+      items: { type: SchemaType.STRING },
+      description: "Safety warnings in English.",
+    },
+    specialNotesJa: {
+      type: SchemaType.ARRAY,
+      items: { type: SchemaType.STRING },
+      description: "Safety warnings in Japanese.",
+    },
   },
-  required: ["candidates"],
+  required: ["candidates", "disposalCategory", "disposalCategoryJa", "preparationSteps", "preparationStepsJa"],
 };
 
 function getClient() {
@@ -72,6 +106,12 @@ function normalizeResult(data: any): AiIdentificationResult {
     candidates,
     summaryEn: data.summaryEn,
     summaryJa: data.summaryJa,
+    disposalCategory: data.disposalCategory,
+    disposalCategoryJa: data.disposalCategoryJa,
+    preparationSteps: data.preparationSteps,
+    preparationStepsJa: data.preparationStepsJa,
+    specialNotes: data.specialNotes,
+    specialNotesJa: data.specialNotesJa,
   };
 }
 
@@ -123,6 +163,9 @@ export async function identifyTextItem(
     Identify the following item: "${itemName}"
     ${municipalityContext ? `Context for municipality rules: ${municipalityContext}` : ""}
     Categorize it and suggest the most likely classification.
+    Provide realistic preparation steps (e.g. for oversized items like furniture, mention booking and stickers; for recyclables, mention rinsing; for dangerous items, mention safety).
+    If you are unsure of the specific rules for the municipality, provide general Japanese standard guidance.
+    IMPORTANT: Do NOT suggest irrelevant steps (like 'drain water' for a bed). Be logical.
   `;
 
   return generateStructuredIdentification([prompt]);
@@ -139,6 +182,8 @@ export async function identifyImageItem(
     Analyze this image of a waste item.
     ${municipalityContext ? `Context for municipality rules: ${municipalityContext}` : ""}
     Identify the item and categorize it according to Japanese waste sorting standards.
+    Provide realistic preparation steps and special notes. 
+    IMPORTANT: Do NOT suggest irrelevant steps. Be logical and grounded in common sense.
   `;
 
   return generateStructuredIdentification([

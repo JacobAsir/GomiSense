@@ -487,6 +487,26 @@ const UNIVERSAL_ITEMS: ItemRule[] = [
     tags: ["furniture", "oversized"],
   },
   {
+    itemName: "Bed",
+    itemNameJa: "ベッド",
+    categoryId: "oversized",
+    synonyms: ["bed", "bed frame", "mattress", "single bed", "double bed", "queen bed", "king bed", "bunk bed"],
+    synonymsJa: ["ベッド", "ベッドフレーム", "マットレス", "寝具"],
+    preparationSteps: [
+      "Contact your municipality to schedule oversized waste collection",
+      "Disassemble if possible to make it easier to move",
+      "Purchase an oversized waste sticker from a convenience store",
+    ],
+    preparationStepsJa: [
+      "自治体に粗大ゴミ回収の予約を入れる",
+      "可能であれば解体して運びやすくする",
+      "コンビニなどで粗大ゴミ処理券を購入する",
+    ],
+    specialNotes: ["Spring mattresses may require a special disposal fee in some areas"],
+    specialNotesJa: ["スプリング入りマットレスは別途費用がかかる場合があります"],
+    tags: ["furniture", "oversized", "bedroom"],
+  },
+  {
     itemName: "Bicycle",
     itemNameJa: "自転車",
     categoryId: "oversized",
