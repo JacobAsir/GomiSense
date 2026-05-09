@@ -8,7 +8,7 @@ import { Loader2, ArrowLeft, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CameraCapture } from "@/components/camera-capture";
 import { useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Scan() {
   const { toast } = useToast();
