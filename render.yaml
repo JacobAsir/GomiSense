@@ -14,7 +14,7 @@ services:
       - key: GEMINI_API_KEY
         sync: false # Set in Render Dashboard
       - key: GEMINI_MODEL
-        value: gemini-1.5-flash
+        value: gemini-2.0-flash
       - key: NODE_VERSION
         value: 20
 
@@ -23,7 +23,7 @@ services:
     name: gomisense-frontend
     runtime: static
     # Combine install and build into one command for Static Sites
-    buildCommand: npm install -g pnpm && pnpm install --no-frozen-lockfile && pnpm --filter @workspace/gomi-sense build
+    buildCommand: "npm install -g pnpm && pnpm install --no-frozen-lockfile && pnpm --filter @workspace/gomi-sense build"
     staticPublishPath: ./artifacts/gomi-sense/dist/public
     envVars:
       - key: NODE_VERSION
