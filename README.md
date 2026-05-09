@@ -4,6 +4,19 @@ GomiSense is a Japan-focused waste sorting assistant. It helps users identify ho
 
 The project is designed to use Gemini API for multimodal classification: vision, voice-derived text, and typed text. Municipality rules are kept in local TypeScript data, so the app does not need a database.
 
+---
+
+## 🚀 What's New (Production Update)
+
+- **Direct AI Search**: Users can now type or speak directly on the Home page search bar for instant AI classification results.
+- **Dedicated Camera Vision**: The "Scan" button now opens a focused Camera-Only page for easier photo capture and analysis.
+- **Google Search Grounding**: Gemini now uses live Google Search to verify disposal rules for rare or unusual items.
+- **Local-First Fallbacks**: Added a local database of 150+ common items that loads instantly, even if the backend is waking up (eliminates blank loading states).
+- **Consolidated Navigation**: Removed the bottom nav and moved all controls (Search, Cities, Rules) to a fixed, sticky top header with safe-area support for mobile.
+- **Visual Branding**: Integrated the GomiSense "Leaf" logo and updated the favicon for a professional look.
+
+---
+
 ## What The Project Does
 
 - Lets users choose a supported Japanese municipality.
@@ -23,7 +36,6 @@ The project is designed to use Gemini API for multimodal classification: vision,
 - Frontend: React, Vite, Tailwind CSS, shadcn/ui-style components, Wouter, TanStack Query
 - Backend: Express 5, Pino logging, CORS
 - Validation: Zod generated from OpenAPI
-- API code generation: Orval
 - AI API: Gemini API for vision, voice/text understanding, and waste classification assistance
 - Database: Not required for this MVP; municipality data lives in local code
 
@@ -43,13 +55,14 @@ The project is designed to use Gemini API for multimodal classification: vision,
 |   |   +-- package.json
 |   +-- gomi-sense/              # Main React/Vite web app
 |   |   +-- src/
+|   |   |   +-- data/            # Local fallback data (for cold starts)
 |   |   |   +-- components/      # App components and UI primitives
 |   |   |   +-- hooks/           # React hooks
 |   |   |   +-- lib/             # App store and utilities
 |   |   |   +-- pages/           # Route pages
 |   |   |   +-- App.tsx          # App routing/providers
 |   |   |   +-- main.tsx         # React entry point
-|   |   +-- public/              # Static assets
+|   |   +-- public/              # Static assets (Logo, Favicon)
 |   |   +-- vite.config.ts       # Vite config, reads PORT and BASE_PATH
 |   |   +-- package.json
 |   +-- mockup-sandbox/          # Generated design/mockup sandbox
@@ -57,8 +70,8 @@ The project is designed to use Gemini API for multimodal classification: vision,
 |   +-- api-client-react/        # Generated React Query client and custom fetch
 |   +-- api-spec/                # OpenAPI spec and Orval config
 |   +-- api-zod/                 # Generated Zod validators for API requests
-|   +-- db/                      # Legacy scaffold; not required by the MVP
 +-- scripts/                     # Workspace scripts
++-- render.yaml                  # Production Deployment Blueprint
 +-- .env                         # Local environment variable reference
 +-- package.json                 # Root workspace scripts
 +-- pnpm-workspace.yaml          # Workspace packages and dependency catalog
@@ -83,58 +96,17 @@ All backend routes are mounted under `/api`.
 
 See `.env` for the local reference values and required API keys.
 
-Currently used by the code:
+- `GEMINI_API_KEY`: Required for AI features (Set in Render Dashboard).
+- `PORT`: Required for local dev and API routing.
+- `BASE_PATH`: Frontend routing base.
 
-- `PORT`: Required by `artifacts/api-server/src/index.ts` and `artifacts/gomi-sense/vite.config.ts`.
-- `BASE_PATH`: Required by the web app Vite config.
-- `LOG_LEVEL`: Optional API logger level, defaults to `info`.
-- `NODE_ENV`: Used for development/production behavior.
-- `GEMINI_API_KEY`: Required for Gemini-powered vision, voice/text, and classification features.
-- `GEMINI_MODEL`: Optional Gemini model override. Defaults to `gemini-2.5-flash`.
+## ☁️ Production Deployment (Render)
 
-Not used:
+GomiSense is deployed as a two-service architecture on Render:
+1.  **Backend (Web Service)**: Handles AI and Rules logic.
+2.  **Frontend (Static Site)**: Optimized for fast global delivery.
 
-- `DATABASE_URL`: Not needed. The project should avoid database dependencies for this MVP.
-- `OPENAI_API_KEY`: Not needed. Gemini is the selected AI provider.
-
-## Local Development
-
-Install dependencies:
-
-```bash
-pnpm install
-```
-
-Start both the API server and the web app:
-
-```bash
-pnpm dev
-```
-
-Alternatively, run them separately:
-
-```bash
-# Start only the API server
-pnpm dev:api
-
-# Start only the web app
-pnpm dev:web
-```
-
-The web app will be available at `http://localhost:20898` and the API at `http://localhost:8080`.
-
-Interactive API documentation (Swagger) is available at `http://localhost:8080/api/docs`.
-
-## Useful Commands
-
-```bash
-pnpm run typecheck    # Validate TypeScript across the workspace
-pnpm run build        # Build the entire project
-pnpm dev              # Run full-stack development environment
-pnpm dev:api          # Run only the backend
-pnpm dev:web          # Run only the frontend
-pnpm --filter @workspace/api-spec run codegen  # Regenerate API hooks
-```
+The configuration is managed via the `render.yaml` file in the root directory. To deploy your own instance, simply connect your GitHub repo to Render and it will automatically detect the blueprint.
 
 ## Application Architecture
 
@@ -146,6 +118,7 @@ graph TD
     User([User]) -->|Search/Scan| Web[Vite Frontend]
     Web -->|API Request| API[Express API Server]
     API -->|1. Identify| AI[Gemini 1.5 Flash]
+    AI -->|Grounding| Google[Google Search]
     AI -->|Labels| Engine[Rules Engine]
     Engine -->|Lookup| DB[(Local Rules DB)]
     DB -->|Verified Rules| Result[Hybrid Result]
@@ -156,13 +129,6 @@ graph TD
     Web -->|Display| User
 ```
 
-### Key Components
-- **Vite Frontend**: A responsive React application using Tailwind CSS and Lucide icons.
-- **Express API Server**: Handles classification requests and manages municipality data.
-- **Rules Engine**: A sophisticated matching algorithm that prioritizes verified local rules over AI guesses.
-- **Local Rules DB**: A curated database of Japanese municipality disposal rules and common items.
-- **Gemini 1.5 Flash**: Used for multi-modal identification (text/images) and providing fallback instructions for unknown items.
-
 ## Supported Municipalities
 
 - Tokyo, Shibuya Ward
@@ -171,12 +137,4 @@ graph TD
 - Yokohama City
 - Fukuoka City
 
-The detailed categories, collection days, fallback guidance, and item rules live in `artifacts/api-server/src/rules/municipalities.ts`.
-
-## Important Notes
-
-- The intended production AI provider is Gemini API.
-- Gemini should be used for image understanding and text classification support, while final disposal guidance should stay grounded in local municipality rules.
-- The project does not require a database. Avoid adding database setup unless the product requirements change.
-- The OpenAPI file in `lib/api-spec/openapi.yaml` is the source of truth for generated clients and validators.
-- After regenerating API code, keep `lib/api-zod/src/index.ts` exporting only from `./generated/api` to avoid generated barrel export conflicts.
+© 2026 GomiSense Team.
