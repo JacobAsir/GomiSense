@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
 export interface AiItemCandidate {
   label: string;
@@ -13,124 +13,98 @@ export interface AiIdentificationResult {
 
 const DEFAULT_MODEL = "gemini-2.0-flash";
 
-const candidateSchema = {
-  type: Type.OBJECT,
+const responseSchema = {
+  type: SchemaType.OBJECT,
   properties: {
     candidates: {
-      type: Type.ARRAY,
-      minItems: 1,
-      maxItems: 5,
+      type: SchemaType.ARRAY,
       items: {
-        type: Type.OBJECT,
+        type: SchemaType.OBJECT,
         properties: {
           label: {
-            type: Type.STRING,
+            type: SchemaType.STRING,
             description: "A concise English item label, material, or common synonym.",
           },
           confidence: {
-            type: Type.NUMBER,
-            description: "Confidence from 0 to 1.",
+            type: SchemaType.NUMBER,
+            description: "Confidence score from 0.0 to 1.0.",
           },
         },
         required: ["label", "confidence"],
-        propertyOrdering: ["label", "confidence"],
       },
     },
     summaryEn: {
-      type: Type.STRING,
-      description: "One short English note about the identified item.",
+      type: SchemaType.STRING,
+      description: "A 1-2 sentence English summary of the identified item and why it belongs to the top candidate category.",
     },
     summaryJa: {
-      type: Type.STRING,
-      description: "One short Japanese note about the identified item.",
+      type: SchemaType.STRING,
+      description: "A 1-2 sentence Japanese summary of the identified item and why it belongs to the top candidate category.",
     },
   },
   required: ["candidates"],
-  propertyOrdering: ["candidates", "summaryEn", "summaryJa"],
 };
 
-function getClient(): GoogleGenAI {
+function getClient() {
   const apiKey = process.env.GEMINI_API_KEY;
-
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is required for live Gemini classification.");
+    throw new Error("GEMINI_API_KEY is not configured.");
   }
-
-  return new GoogleGenAI({ apiKey });
+  return new GoogleGenerativeAI(apiKey);
 }
 
-function getModel(): string {
+function getModel() {
   return process.env.GEMINI_MODEL || DEFAULT_MODEL;
 }
 
-function clampConfidence(value: unknown): number {
-  if (typeof value !== "number" || Number.isNaN(value)) return 0.5;
-  return Math.max(0, Math.min(1, value));
-}
-
-function parseJsonObject(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
-    if (start < 0 || end <= start) throw new Error("Gemini did not return JSON.");
-    return JSON.parse(text.slice(start, end + 1));
-  }
-}
-
-function normalizeResult(raw: unknown): AiIdentificationResult {
-  if (!raw || typeof raw !== "object") {
-    throw new Error("Gemini returned an invalid response shape.");
-  }
-
-  const data = raw as Record<string, unknown>;
-  const rawCandidates = Array.isArray(data.candidates) ? data.candidates : [];
-
-  const candidates = rawCandidates
-    .map((candidate): AiItemCandidate | null => {
-      if (!candidate || typeof candidate !== "object") return null;
-      const record = candidate as Record<string, unknown>;
-      const label = typeof record.label === "string" ? record.label.trim() : "";
-      if (!label) return null;
-
-      return {
-        label,
-        confidence: clampConfidence(record.confidence),
-      };
-    })
-    .filter((candidate): candidate is AiItemCandidate => candidate !== null);
-
-  if (candidates.length === 0) {
-    throw new Error("Gemini did not identify any item candidates.");
-  }
+/**
+ * Normalizes the AI result to ensure it fits our interface.
+ */
+function normalizeResult(data: any): AiIdentificationResult {
+  const candidates = Array.isArray(data?.candidates) 
+    ? data.candidates.map((c: any) => ({
+        label: String(c.label || "unknown"),
+        confidence: Number(c.confidence || 0),
+      }))
+    : [];
 
   return {
     candidates,
-    summaryEn: typeof data.summaryEn === "string" ? data.summaryEn : undefined,
-    summaryJa: typeof data.summaryJa === "string" ? data.summaryJa : undefined,
+    summaryEn: data.summaryEn,
+    summaryJa: data.summaryJa,
   };
 }
 
+/**
+ * Robust JSON parsing for Gemini responses.
+ */
+function parseJsonObject(text: string): any {
+  try {
+    // Remove markdown code blocks if present
+    const cleaned = text.replace(/```json\n?|```/g, "").trim();
+    return JSON.parse(cleaned);
+  } catch (e) {
+    throw new Error(`Failed to parse AI response as JSON: ${text}`);
+  }
+}
+
 async function generateStructuredIdentification(
-  contents: Parameters<GoogleGenAI["models"]["generateContent"]>[0]["contents"],
+  parts: any[]
 ): Promise<AiIdentificationResult> {
-  const response = await getClient().models.generateContent({
+  const client = getClient();
+  const model = client.getGenerativeModel({
     model: getModel(),
-    contents,
-    config: {
+    generationConfig: {
       responseMimeType: "application/json",
-      responseSchema: candidateSchema,
+      responseSchema: responseSchema,
       temperature: 0.1,
-    },
-    tools: [
-      {
-        google_search_retrieval: {}, // Enables live web search
-      },
-    ],
+    }
   });
 
-  const text = response.text;
+  const result = await model.generateContent(parts);
+  const response = await result.response;
+  const text = response.text();
+  
   if (!text) {
     throw new Error("Gemini returned an empty response.");
   }
@@ -138,56 +112,38 @@ async function generateStructuredIdentification(
   return normalizeResult(parseJsonObject(text));
 }
 
-export async function identifyTextItem(
+export async function identifyWasteFromText(
   itemName: string,
-  municipalityName?: string,
-  categories?: string[],
+  municipalityContext?: string
 ): Promise<AiIdentificationResult> {
-  const cityContext = municipalityName ? ` specifically for ${municipalityName}, Japan` : " in Japan";
-  const categoryContext = categories?.length 
-    ? `\n\nMap the item to one of these local disposal categories if applicable: ${categories.join(", ")}.` 
-    : "";
+  const prompt = `
+    You are an expert in Japanese waste sorting.
+    Identify the following item: "${itemName}"
+    ${municipalityContext ? `Context for municipality rules: ${municipalityContext}` : ""}
+    Categorize it and suggest the most likely classification.
+  `;
 
-  const prompt = [
-    `You are an expert waste sorting assistant${cityContext}.${categoryContext}`,
-    "Identify the household waste item provided by the user.",
-    "Return likely item labels only; do not decide municipality disposal rules.",
-    "Prefer concrete labels and materials that a rules engine can match, for example: PET bottle, plastic packaging, aluminum can, glass bottle, cardboard, battery.",
-    `User input: ${itemName}`,
-  ].join("\n");
-
-  return generateStructuredIdentification(prompt);
+  return generateStructuredIdentification([prompt]);
 }
 
-export async function identifyImageItem(
+export async function identifyWasteFromImage(
   imageBase64: string,
   mimeType: string,
-  municipalityName?: string,
-  categories?: string[],
+  municipalityContext?: string
 ): Promise<AiIdentificationResult> {
-  const cityContext = municipalityName ? ` in ${municipalityName}, Japan` : " in Japan";
-  const categoryContext = categories?.length 
-    ? `\n\nMap the item to one of these local disposal categories if applicable: ${categories.join(", ")}.` 
-    : "";
-
-  const prompt = [
-    `Identify the main household waste item in this image for a waste sorting app${cityContext}.${categoryContext}`,
-    "Return likely item labels only; do not decide municipality disposal rules.",
-    "Prefer concise English labels and material/container terms that a rules engine can match.",
-  ].join("\n");
+  const prompt = `
+    Analyze this image of a waste item.
+    ${municipalityContext ? `Context for municipality rules: ${municipalityContext}` : ""}
+    Identify the item and categorize it according to Japanese waste sorting standards.
+  `;
 
   return generateStructuredIdentification([
+    prompt,
     {
-      role: "user",
-      parts: [
-        { text: prompt },
-        {
-          inlineData: {
-            mimeType,
-            data: imageBase64,
-          },
-        },
-      ],
-    },
+      inlineData: {
+        data: imageBase64,
+        mimeType: mimeType
+      }
+    }
   ]);
 }
