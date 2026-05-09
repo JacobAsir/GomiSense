@@ -18,7 +18,18 @@ export function Layout({ children }: { children: ReactNode }) {
             </div>
             <span className="font-bold text-lg tracking-tight">GomiSense</span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            <nav className="hidden md:flex items-center gap-4 mr-4 border-r pr-4 border-border">
+              <Link href="/" className={`text-sm font-medium ${location === "/" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                {language === "ja" ? "検索" : "Search"}
+              </Link>
+              <Link href="/municipalities" className={`text-sm font-medium ${location === "/municipalities" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                {language === "ja" ? "自治体" : "Cities"}
+              </Link>
+              <Link href="/how-it-works" className={`text-sm font-medium ${location === "/how-it-works" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+                {language === "ja" ? "ルール" : "Rules"}
+              </Link>
+            </nav>
             <LanguageToggle />
           </div>
         </div>
