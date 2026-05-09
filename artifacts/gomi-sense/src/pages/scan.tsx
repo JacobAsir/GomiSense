@@ -74,7 +74,7 @@ export default function Scan() {
     );
   };
 
-  const handleClassifyImage = (base64: string) => {
+  const handleClassifyImage = (base64: string, mimeType: string) => {
     if (!municipalityId) return;
 
     classifyImageMutation.mutate(
@@ -82,6 +82,7 @@ export default function Scan() {
         data: {
           municipalityId,
           imageBase64: base64,
+          mimeType,
           language: language as ClassifyImageRequestLanguage
         }
       },

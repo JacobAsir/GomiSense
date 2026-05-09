@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { useAppStore } from "@/lib/store";
 
 interface CameraCaptureProps {
-  onCapture: (base64: string) => void;
+  onCapture: (base64: string, mimeType: string) => void;
   disabled?: boolean;
 }
 
@@ -21,13 +21,12 @@ export function CameraCapture({ onCapture, disabled }: CameraCaptureProps) {
     reader.onload = (event) => {
       const result = event.target?.result as string;
       setPreview(result);
-      // Format is already data:image/jpeg;base64,... 
-      // The API might expect base64 string without the prefix, or with. 
-      // The schema says base64. Let's send the full data URI or just base64?
-      // Usually passing the full data URI is safer if mimeType isn't strictly separated, but we can pass the base64 part.
-      // Let's pass the full data URI and let the backend handle it, or strip the prefix.
-      const base64Data = result.split(",")[1];
-      onCapture(base64Data);
+      
+      // result is "data:image/jpeg;base64,..."
+      const [header, base64Data] = result.split(",");
+      const mimeType = header.match(/:(.*?);/)?.[1] || "image/jpeg";
+      
+      onCapture(base64Data, mimeType);
     };
     reader.readAsDataURL(file);
   };
