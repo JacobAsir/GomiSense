@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/lib/store";
 import { Layout } from "@/components/layout";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 import Home from "@/pages/home";
 import Scan from "@/pages/scan";
@@ -25,6 +26,7 @@ const queryClient = new QueryClient({
 function Router() {
   return (
     <Layout>
+      <ScrollToTop />
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/scan" component={Scan} />
