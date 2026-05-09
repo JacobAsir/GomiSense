@@ -24,13 +24,13 @@ export function Layout({ children }: { children: ReactNode }) {
           {/* Navigation Links (Icon + Text) */}
           <nav className="flex items-center gap-6">
             <Link 
-              href="/" 
+              href="/directory" 
               className={`flex flex-col items-center gap-0.5 transition-colors ${
-                location === "/" ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                location === "/directory" ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Search className="h-5 w-5" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">{language === "ja" ? "検索" : "Search"}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">{language === "ja" ? "検索" : "Directory"}</span>
             </Link>
             
             <Link 
