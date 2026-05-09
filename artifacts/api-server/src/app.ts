@@ -41,6 +41,14 @@ app.use(express.urlencoded({ extended: true }));
 // Swagger UI at /api/docs
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
+app.get("/", (req, res) => {
+  res.json({
+    message: "GomiSense API is running",
+    docs: "/api/docs",
+    health: "/api/healthz"
+  });
+});
+
 app.use("/api", router);
 
 export default app;
