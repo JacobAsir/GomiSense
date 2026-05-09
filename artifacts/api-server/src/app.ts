@@ -43,21 +43,4 @@ app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use("/api", router);
 
-// Serve static files in production
-const publicPath = path.resolve(process.cwd(), "public");
-app.use(express.static(publicPath));
-
-// SPA fallback: handle client-side routing
-app.get("*", (req, res) => {
-  if (req.path.startsWith("/api")) {
-    return;
-  }
-  const indexPath = path.join(publicPath, "index.html");
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      res.status(404).send("Not Found");
-    }
-  });
-});
-
 export default app;
