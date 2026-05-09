@@ -112,10 +112,12 @@ async function generateStructuredIdentification(
   return normalizeResult(parseJsonObject(text));
 }
 
-export async function identifyWasteFromText(
+export async function identifyTextItem(
   itemName: string,
-  municipalityContext?: string
+  municipalityName?: string,
+  categoryNames?: string[]
 ): Promise<AiIdentificationResult> {
+  const municipalityContext = municipalityName ? `Municipality: ${municipalityName}. Available categories: ${categoryNames?.join(", ")}` : "";
   const prompt = `
     You are an expert in Japanese waste sorting.
     Identify the following item: "${itemName}"
@@ -126,11 +128,13 @@ export async function identifyWasteFromText(
   return generateStructuredIdentification([prompt]);
 }
 
-export async function identifyWasteFromImage(
+export async function identifyImageItem(
   imageBase64: string,
   mimeType: string,
-  municipalityContext?: string
+  municipalityName?: string,
+  categoryNames?: string[]
 ): Promise<AiIdentificationResult> {
+  const municipalityContext = municipalityName ? `Municipality: ${municipalityName}. Available categories: ${categoryNames?.join(", ")}` : "";
   const prompt = `
     Analyze this image of a waste item.
     ${municipalityContext ? `Context for municipality rules: ${municipalityContext}` : ""}
