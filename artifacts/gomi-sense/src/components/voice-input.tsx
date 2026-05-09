@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
-import { Mic, MicOff, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Mic, MicOff, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 // Add global types for SpeechRecognition
 declare global {
@@ -19,63 +20,104 @@ interface VoiceInputProps {
 
 export function VoiceInput({ onResult, disabled }: VoiceInputProps) {
   const { language } = useAppStore();
+  const { toast } = useToast();
   const [isListening, setIsListening] = useState(false);
-  const [recognition, setRecognition] = useState<any>(null);
   const [isSupported, setIsSupported] = useState(true);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const recog = new SpeechRecognition();
-        recog.continuous = false;
-        recog.interimResults = false;
-        setRecognition(recog);
-      } else {
-        setIsSupported(false);
-      }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setIsSupported(false);
     }
   }, []);
 
-  const toggleListen = useCallback(() => {
-    if (!recognition) return;
+  const startListening = useCallback(async () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
 
-    if (isListening) {
-      recognition.stop();
+    // On some mobile browsers, we need to explicitly request microphone permission
+    // if the SpeechRecognition API fails to trigger it properly.
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+    } catch (err) {
+      console.warn("Microphone permission denied via getUserMedia", err);
+      toast({
+        title: language === "ja" ? "マイクの許可が必要です" : "Microphone Permission Required",
+        description: language === "ja" 
+          ? "ブラウザの設定でマイクへのアクセスを許可してください。" 
+          : "Please allow microphone access in your browser settings.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!recognitionRef.current) {
+      const recog = new SpeechRecognition();
+      recog.continuous = false;
+      recog.interimResults = false;
+      recognitionRef.current = recog;
+    }
+
+    const recognition = recognitionRef.current;
+    recognition.lang = language === "ja" ? "ja-JP" : "en-US";
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      onResult(transcript);
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+      
+      if (event.error === "not-allowed" || event.error === "permission-denied") {
+        toast({
+          title: language === "ja" ? "マイクの許可が必要です" : "Microphone Permission Required",
+          description: language === "ja" 
+            ? "設定でマイクを許可して、ページを更新してください。" 
+            : "Please enable microphone in settings and refresh the page.",
+          variant: "destructive",
+        });
+      } else if (event.error !== "no-speech") {
+        toast({
+          title: language === "ja" ? "エラーが発生しました" : "Voice Error",
+          description: event.error,
+          variant: "destructive",
+        });
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    try {
+      recognition.start();
+    } catch (e) {
+      console.error("Failed to start recognition", e);
+      setIsListening(false);
+    }
+  }, [language, onResult, toast]);
+
+  const toggleListen = useCallback(() => {
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
       setIsListening(false);
     } else {
-      recognition.lang = language === "ja" ? "ja-JP" : "en-US";
-      
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
-      
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        onResult(transcript);
-        setIsListening(false);
-      };
-      
-      recognition.onerror = (event: any) => {
-        console.error("Speech recognition error", event.error);
-        setIsListening(false);
-      };
-      
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      try {
-        recognition.start();
-      } catch (e) {
-        console.error(e);
-        setIsListening(false);
-      }
+      startListening();
     }
-  }, [recognition, isListening, language, onResult]);
+  }, [isListening, startListening]);
 
   if (!isSupported) {
-    return null; // Gracefully degrade by hiding the button
+    return null;
   }
 
   return (
@@ -83,7 +125,10 @@ export function VoiceInput({ onResult, disabled }: VoiceInputProps) {
       type="button"
       variant="outline"
       size="icon"
-      className={cn("shrink-0", isListening && "border-destructive text-destructive bg-destructive/10 animate-pulse")}
+      className={cn(
+        "shrink-0 transition-all duration-300", 
+        isListening && "border-destructive text-destructive bg-destructive/10 ring-2 ring-destructive/20 animate-pulse"
+      )}
       onClick={toggleListen}
       disabled={disabled}
       title={language === "ja" ? "音声入力" : "Voice Input"}
