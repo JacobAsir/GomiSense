@@ -28,7 +28,7 @@ export function Layout({ children }: { children: ReactNode }) {
         {children}
       </main>
 
-      <footer className="border-t border-border mt-auto bg-card">
+      <footer className="border-t border-border mt-auto bg-card pb-safe">
         <div className="container max-w-screen-md mx-auto p-4">
           <nav className="flex justify-around items-center">
             <Link 
