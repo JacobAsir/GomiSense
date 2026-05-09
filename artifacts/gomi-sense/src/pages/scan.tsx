@@ -8,8 +8,10 @@ import { Loader2, ArrowLeft, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CameraCapture } from "@/components/camera-capture";
 import { useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Scan() {
+  const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { municipalityId, language, setLastResult } = useAppStore();
   
@@ -39,6 +41,14 @@ export default function Scan() {
         onSuccess: (result) => {
           setLastResult(result);
           setLocation("/result");
+        },
+        onError: (err: any) => {
+          console.error("Classification error:", err);
+          toast({
+            title: language === "ja" ? "判定に失敗しました" : "Classification failed",
+            description: err?.body?.error || err?.message || (language === "ja" ? "もう一度お試しください" : "Please try again"),
+            variant: "destructive",
+          });
         }
       }
     );
