@@ -1,21 +1,46 @@
 import { useAppStore } from "@/lib/store";
 import { Link, useLocation } from "wouter";
 import { MunicipalitySelector } from "@/components/municipality-selector";
-import { useGetDemoSamples } from "@workspace/api-client-react";
-import { Search, Camera, ArrowRight, MapPin } from "lucide-react";
+import { useGetDemoSamples, useClassifyItem, type ClassifyItemRequestLanguage } from "@workspace/api-client-react";
+import { Search, Camera, ArrowRight, MapPin, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VoiceInput } from "@/components/voice-input";
 import { FALLBACK_COMMON_ITEMS } from "@/data/fallback";
+import { useState } from "react";
 
 export default function Home() {
-  const { municipalityId, language } = useAppStore();
+  const { municipalityId, language, setLastResult } = useAppStore();
   const [, setLocation] = useLocation();
+  const [searchValue, setSearchValue] = useState("");
 
   const { data: demoData, isLoading: demoLoading } = useGetDemoSamples({
     municipalityId: municipalityId || undefined,
   });
+
+  const classifyMutation = useClassifyItem();
+  const isClassifying = classifyMutation.isPending;
+
+  const handleSearch = (value: string) => {
+    if (!municipalityId || !value.trim() || isClassifying) return;
+    
+    classifyMutation.mutate(
+      {
+        data: {
+          municipalityId,
+          itemName: value.trim(),
+          language: language as ClassifyItemRequestLanguage
+        }
+      },
+      {
+        onSuccess: (result) => {
+          setLastResult(result);
+          setLocation("/result");
+        }
+      }
+    );
+  };
 
   return (
     <div className="flex flex-col gap-8 pb-8 animate-in fade-in duration-500">
@@ -51,28 +76,31 @@ export default function Home() {
       <section className="flex flex-col gap-4">
         <div className="flex gap-2 relative">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            {isClassifying ? (
+              <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary animate-spin" />
+            ) : (
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            )}
             <input
               type="text"
-              placeholder={language === "ja" ? "何を捨てますか？" : "What do you want to dispose of?"}
+              placeholder={isClassifying ? (language === "ja" ? "分析中..." : "Analyzing...") : (language === "ja" ? "何を捨てますか？" : "What do you want to dispose of?")}
               className="w-full pl-10 pr-12 h-14 text-lg rounded-2xl border bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm transition-all disabled:opacity-50"
-              disabled={!municipalityId}
+              disabled={!municipalityId || isClassifying}
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
-                  setLocation(`/scan?q=${encodeURIComponent((e.target as HTMLInputElement).value.trim())}`);
+                if (e.key === "Enter") {
+                  handleSearch(searchValue);
                 }
-              }}
-              onClick={() => {
-                if (!municipalityId) return;
-                // Don't redirect immediately on click to allow typing
               }}
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <VoiceInput 
                 onResult={(text) => {
-                  setLocation(`/scan?q=${encodeURIComponent(text)}`);
+                  setSearchValue(text);
+                  handleSearch(text);
                 }}
-                disabled={!municipalityId}
+                disabled={!municipalityId || isClassifying}
               />
             </div>
           </div>
@@ -81,11 +109,11 @@ export default function Home() {
         <Button
           variant="outline"
           className="h-16 text-lg rounded-2xl shadow-sm gap-3 border-primary/20 hover:border-primary/50 hover:bg-secondary/50 transition-all w-full"
-          disabled={!municipalityId}
-          onClick={() => setLocation("/scan?mode=camera")}
+          disabled={!municipalityId || isClassifying}
+          onClick={() => setLocation("/scan")}
         >
           <Camera className="h-6 w-6 text-primary" />
-          <span className="font-bold">{language === "ja" ? "カメラで検索" : "Scan with Camera"}</span>
+          <span className="font-bold">{language === "ja" ? "カメラで判定" : "Scan with Camera"}</span>
         </Button>
       </section>
 
@@ -113,10 +141,11 @@ export default function Home() {
             FALLBACK_COMMON_ITEMS.slice(0, 4).map((sample, i) => (
               <Card 
                 key={i} 
-                className={`cursor-pointer transition-all hover:border-primary/40 hover:shadow-md ${!municipalityId ? 'opacity-50 pointer-events-none' : ''}`}
+                className={`cursor-pointer transition-all hover:border-primary/40 hover:shadow-md ${(!municipalityId || isClassifying) ? 'opacity-50 pointer-events-none' : ''}`}
                 onClick={() => {
                   if (municipalityId) {
-                    setLocation(`/scan?q=${encodeURIComponent(sample.itemName)}`);
+                    setSearchValue(sample.itemName);
+                    handleSearch(sample.itemName);
                   }
                 }}
               >
@@ -140,10 +169,11 @@ export default function Home() {
           ) : demoData?.samples?.slice(0, 4).map((sample, i) => (
             <Card 
               key={i} 
-              className={`cursor-pointer transition-all hover:border-primary/40 hover:shadow-md ${!municipalityId ? 'opacity-50 pointer-events-none' : ''}`}
+              className={`cursor-pointer transition-all hover:border-primary/40 hover:shadow-md ${(!municipalityId || isClassifying) ? 'opacity-50 pointer-events-none' : ''}`}
               onClick={() => {
                 if (municipalityId) {
-                  setLocation(`/scan?q=${encodeURIComponent(sample.itemName)}`);
+                  setSearchValue(sample.itemName);
+                  handleSearch(sample.itemName);
                 }
               }}
             >
