@@ -22,7 +22,6 @@ services:
   - type: web
     name: gomisense-frontend
     runtime: static
-    plan: free
     # Combine install and build into one command for Static Sites
     buildCommand: npm install -g pnpm && pnpm install --no-frozen-lockfile && pnpm --filter @workspace/gomi-sense build
     staticPublishPath: ./artifacts/gomi-sense/dist
