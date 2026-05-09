@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VoiceInput } from "@/components/voice-input";
 import { FALLBACK_COMMON_ITEMS } from "@/data/fallback";
+import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 export default function Home() {
