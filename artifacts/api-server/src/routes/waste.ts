@@ -114,9 +114,10 @@ router.post("/classify-image", async (req, res) => {
       "Gemini vision",
     );
     res.json(applyAiNotes(result, identification));
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Image classification failed";
-    res.status(503).json({
+  } catch (err: any) {
+    const message = err.message || "Image classification failed";
+    const statusCode = err.status || 503;
+    res.status(statusCode).json({
       error: "Gemini image classification unavailable",
       details: message,
     });

@@ -11,7 +11,7 @@ export interface AiIdentificationResult {
   summaryJa?: string;
 }
 
-const DEFAULT_MODEL = "gemini-2.0-flash";
+const DEFAULT_MODEL = "gemini-2.5-flash";
 
 const responseSchema = {
   type: SchemaType.OBJECT,
