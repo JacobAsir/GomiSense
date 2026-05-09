@@ -32,7 +32,7 @@ export default function Result() {
   return (
     <div className="flex flex-col gap-6 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => setLocation("/scan")} className="px-0 hover:bg-transparent">
+        <Button variant="ghost" size="sm" onClick={() => setLocation("/")} className="px-0 hover:bg-transparent">
           <ArrowLeft className="h-4 w-4 mr-2" />
           {language === "ja" ? "別のアイテムを調べる" : "Search another item"}
         </Button>
@@ -160,16 +160,24 @@ export default function Result() {
         </div>
       )}
 
-      {municipality?.website && (
-        <div className="mt-6 flex justify-center">
-          <Button variant="outline" className="w-full sm:w-auto" asChild>
+      <div className="mt-8 flex flex-col gap-3">
+        <Button 
+          className="w-full h-14 text-lg rounded-xl shadow-md font-bold"
+          onClick={() => setLocation("/")}
+        >
+          <ArrowLeft className="mr-2 h-5 w-5" />
+          {language === "ja" ? "別のアイテムを調べる" : "Search Another Item"}
+        </Button>
+
+        {municipality?.website && (
+          <Button variant="outline" className="w-full h-12 rounded-xl" asChild>
             <a href={municipality.website} target="_blank" rel="noopener noreferrer">
               {language === "ja" ? "自治体の公式サイトを確認" : "Official Municipality Website"}
               <ExternalLink className="ml-2 h-4 w-4" />
             </a>
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
