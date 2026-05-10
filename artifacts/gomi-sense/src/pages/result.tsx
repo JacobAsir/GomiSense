@@ -68,9 +68,14 @@ export default function Result() {
           <div className="text-muted-foreground text-sm font-medium">
             {language === "ja" ? "アイテム" : "Item"}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {lastResult.itemName}
-          </h1>
+          <div className="flex flex-col items-center gap-1">
+            <h1 className="text-3xl font-bold tracking-tight">
+              {language === "ja" ? (lastResult as any).itemNameJa || lastResult.itemName : lastResult.itemName}
+            </h1>
+            <div className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
+              {language === "ja" ? lastResult.itemName : (lastResult as any).itemNameJa}
+            </div>
+          </div>
           
           <div className="mt-2">
             <CategoryBadge 

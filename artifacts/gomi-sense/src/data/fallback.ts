@@ -15,13 +15,13 @@ export const FALLBACK_MUNICIPALITIES = [
 ];
 
 export const FALLBACK_COMMON_ITEMS = [
-  { itemName: "PET bottle", itemNameJa: "ペットボトル", disposalCategory: "PET Bottles" },
-  { itemName: "Cardboard", itemNameJa: "段ボール", disposalCategory: "Paper / Cardboard" },
-  { itemName: "Aluminum Can", itemNameJa: "アルミ缶", disposalCategory: "Cans / Metals" },
-  { itemName: "Battery", itemNameJa: "電池", disposalCategory: "Hazardous" },
-  { itemName: "Newspaper", itemNameJa: "新聞紙", disposalCategory: "Paper / Cardboard" },
-  { itemName: "Glass Bottle", itemNameJa: "ガラス瓶", disposalCategory: "Glass Bottles" },
-  { itemName: "Smartphone", itemNameJa: "スマートフォン", disposalCategory: "Electronics" },
-  { itemName: "Sofa", itemNameJa: "ソファ", disposalCategory: "Oversized Waste" },
+  { itemName: "PET bottle", itemNameJa: "ペットボトル", disposalCategory: "PET Bottles", categoryJa: "ペットボトル" },
+  { itemName: "Cardboard", itemNameJa: "段ボール", disposalCategory: "Paper / Cardboard", categoryJa: "古紙・段ボール" },
+  { itemName: "Aluminum Can", itemNameJa: "アルミ缶", disposalCategory: "Cans / Metals", categoryJa: "かん・金属" },
+  { itemName: "Battery", itemNameJa: "電池", disposalCategory: "Hazardous", categoryJa: "有害ゴミ" },
+  { itemName: "Newspaper", itemNameJa: "新聞紙", disposalCategory: "Paper / Cardboard", categoryJa: "古紙" },
+  { itemName: "Glass Bottle", itemNameJa: "ガラス瓶", disposalCategory: "Glass Bottles", categoryJa: "びん" },
+  { itemName: "Smartphone", itemNameJa: "スマートフォン", disposalCategory: "Electronics", categoryJa: "小型家電" },
+  { itemName: "Sofa", itemNameJa: "ソファ", disposalCategory: "Oversized Waste", categoryJa: "粗大ゴミ" },
 ];
 

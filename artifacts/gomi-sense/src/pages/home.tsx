@@ -161,14 +161,19 @@ export default function Home() {
                 }}
               >
                 <CardContent className="p-4 flex flex-col justify-between h-full">
-                  <div className="font-medium text-base mb-2">
-                    {language === "ja" ? (sample as any).itemNameJa : sample.itemName}
+                  <div className="flex flex-col gap-0.5 mb-2">
+                    <div className="font-bold text-base leading-tight">
+                      {language === "ja" ? (sample as any).itemNameJa : sample.itemName}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                      {language === "ja" ? sample.itemName : (sample as any).itemNameJa}
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center mt-auto">
-                    <span className="text-xs text-muted-foreground truncate mr-2">
+                  <div className="flex justify-between items-center mt-auto pt-2 border-t border-border/40">
+                    <span className="text-[10px] font-bold text-primary/80 truncate mr-2 uppercase">
                       {language === "ja" ? (sample as any).categoryJa || (sample as any).category : sample.category}
                     </span>
-                    <ArrowRight className="h-4 w-4 text-primary shrink-0 opacity-50" />
+                    <ArrowRight className="h-3.5 w-3.5 text-primary shrink-0 opacity-50" />
                   </div>
                 </CardContent>
               </Card>
