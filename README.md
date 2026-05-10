@@ -8,7 +8,6 @@ The project is designed to use Gemini API for multimodal classification: vision,
 
 ## 🚀 What's New (Production Update)
 
-- **Groq Whisper Integration**: Replaced browser-based speech recognition with Groq's high-speed Whisper Large v3 model for 99% accuracy on mobile devices and noisy environments.
 - **Hybrid AI Fallback**: When an item isn't in our local database, the AI now generates logical, context-aware disposal steps instead of simple summaries.
 - **Direct AI Search**: Users can now type or speak directly on the Home page search bar for instant AI classification results.
 - **Dedicated Camera Vision**: The "Scan" button now opens a focused Camera-Only page for easier photo capture and analysis.
@@ -33,7 +32,6 @@ The project is designed to use Gemini API for multimodal classification: vision,
 - **Monorepo**: pnpm workspaces
 - **AI Models**: 
   - **Gemini 2.5 Flash**: Image recognition, text classification, and grounding.
-  - **Groq Whisper-Large-v3**: High-speed, high-accuracy speech-to-text.
 - **Frontend**: React, Vite, Tailwind CSS, shadcn/ui, Wouter, TanStack Query
 - **Backend**: Express 5, Pino logging
 - **API Communication**: OpenAPI spec with generated React Query hooks and Zod validators.
@@ -88,7 +86,6 @@ All backend routes are mounted under `/api`.
 | `GET` | `/api/municipalities/:municipalityId` | Get one municipality profile |
 | `POST` | `/api/classify-item` | Classify a typed waste item |
 | `POST` | `/api/classify-image` | Classify a base64 image using Gemini Vision |
-| `POST` | `/api/transcribe` | Transcribe audio via Groq Whisper |
 | `GET` | `/api/demo-samples` | Return demo/common sample items |
 | `GET` | `/api/search-items` | Search known item rules by name |
 
@@ -97,7 +94,6 @@ All backend routes are mounted under `/api`.
 See `.env.example` for the local reference values and required API keys.
 
 - `GEMINI_API_KEY`: Required for AI features (Set in Render Dashboard).
-- `GROQ_API_KEY`: Required for Voice features (Set in Render Dashboard).
 - `PORT`: Required for local dev and API routing.
 - `BASE_PATH`: Frontend routing base.
 
@@ -116,10 +112,8 @@ GomiSense uses a **Hybrid Knowledge Engine** that combines a verified local rule
 ### Process Flow
 ```mermaid
 graph TD
-    User([User]) -->|Voice/Text/Photo| Web[Vite Frontend]
-    Web -->|Audio| Groq[Groq Whisper STT]
-    Groq -->|Text| API[Express API Server]
-    Web -->|Text/Image| API
+    User([User]) -->|Search/Scan| Web[Vite Frontend]
+    Web -->|API Request| API[Express API Server]
     API -->|1. Identify| AI[Gemini 2.5 Flash]
     AI -->|Labels| Engine[Rules Engine]
     Engine -->|Lookup| DB[(Local Rules DB)]
