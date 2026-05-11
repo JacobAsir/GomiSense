@@ -1,18 +1,44 @@
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useAppStore } from "@/lib/store";
-import { ArrowLeft, Search, Filter } from "lucide-react";
+import { ArrowLeft, Search, Filter, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CategoryBadge } from "@/components/category-badge";
-import { useGetDirectory } from "@workspace/api-client-react";
+import { useGetDirectory, useClassifyItem, type ClassifyItemRequestLanguage } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Directory() {
   const [, setLocation] = useLocation();
-  const { language, municipalityId } = useAppStore();
+  const { language, municipalityId, setLastResult } = useAppStore();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [classifyingItem, setClassifyingItem] = useState<string | null>(null);
+
+  const classifyMutation = useClassifyItem();
+
+  const handleItemClick = (itemName: string) => {
+    if (!municipalityId || classifyMutation.isPending) return;
+    setClassifyingItem(itemName);
+    classifyMutation.mutate(
+      {
+        data: {
+          municipalityId,
+          itemName,
+          language: language as ClassifyItemRequestLanguage,
+        },
+      },
+      {
+        onSuccess: (result) => {
+          setLastResult(result);
+          setLocation("/result");
+        },
+        onSettled: () => {
+          setClassifyingItem(null);
+        },
+      }
+    );
+  };
 
   const { data, isLoading } = useGetDirectory({
     municipalityId: municipalityId || "",
@@ -102,29 +128,37 @@ export default function Directory() {
             <Skeleton key={i} className="h-16 w-full rounded-xl" />
           ))
         ) : filteredItems.length > 0 ? (
-          filteredItems.map((item, i) => (
-            <div 
-              key={i}
-              className="flex items-center justify-between p-4 bg-card border rounded-xl hover:border-primary/40 transition-colors cursor-pointer group shadow-sm"
-              onClick={() => setLocation(`/scan?q=${encodeURIComponent(item.itemName)}`)}
-            >
-              <div className="flex flex-col">
-                <span className="font-bold text-base group-hover:text-primary transition-colors">
-                  {language === "ja" ? item.itemNameJa : item.itemName}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                   {language === "ja" ? item.itemName : item.itemNameJa}
-                </span>
+          filteredItems.map((item, i) => {
+            const isThisClassifying = classifyingItem === item.itemName;
+            return (
+              <div 
+                key={i}
+                className="flex items-center justify-between p-4 bg-card border rounded-xl hover:border-primary/40 transition-colors cursor-pointer group shadow-sm disabled:opacity-50"
+                onClick={() => handleItemClick(item.itemName)}
+                aria-disabled={classifyMutation.isPending}
+              >
+                <div className="flex flex-col">
+                  <span className="font-bold text-base group-hover:text-primary transition-colors">
+                    {language === "ja" ? item.itemNameJa : item.itemName}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {language === "ja" ? item.itemName : item.itemNameJa}
+                  </span>
+                </div>
+                {isThisClassifying ? (
+                  <Loader2 className="h-5 w-5 text-primary animate-spin shrink-0" />
+                ) : (
+                  <CategoryBadge 
+                    categoryEn={item.disposalCategory}
+                    categoryJa={item.disposalCategoryJa}
+                    color={item.categoryColor}
+                    language={language}
+                    className="text-[10px] uppercase font-bold"
+                  />
+                )}
               </div>
-              <CategoryBadge 
-                categoryEn={item.disposalCategory}
-                categoryJa={item.disposalCategoryJa}
-                color={item.categoryColor}
-                language={language}
-                className="text-[10px] uppercase font-bold"
-              />
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="py-20 text-center flex flex-col items-center gap-4">
             <div className="bg-muted rounded-full p-6 text-muted-foreground">
