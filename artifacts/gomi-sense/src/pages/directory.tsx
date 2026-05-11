@@ -31,7 +31,7 @@ export default function Directory() {
       {
         onSuccess: (result) => {
           setLastResult(result);
-          setLocation("/result");
+          setLocation("/result?from=directory");
         },
         onSettled: () => {
           setClassifyingItem(null);

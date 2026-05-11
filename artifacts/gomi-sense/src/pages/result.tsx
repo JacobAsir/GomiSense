@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { useAppStore } from "@/lib/store";
 import { ArrowLeft, CheckCircle2, AlertTriangle, CalendarDays, ExternalLink, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,15 @@ import { useGetMunicipalityById, getGetMunicipalityByIdQueryKey } from "@workspa
 
 export default function Result() {
   const [, setLocation] = useLocation();
+  const search = useSearch();
   const { lastResult, language, municipalityId } = useAppStore();
+
+  const params = new URLSearchParams(search);
+  const fromDirectory = params.get("from") === "directory";
+  const backPath = fromDirectory ? "/directory" : "/";
+  const backLabel = fromDirectory
+    ? (language === "ja" ? "一覧に戻る" : "Back to Directory")
+    : (language === "ja" ? "別のアイテムを調べる" : "Search Another Item");
 
   const { data: municipality } = useGetMunicipalityById(municipalityId || "", {
     query: { enabled: !!municipalityId, queryKey: getGetMunicipalityByIdQueryKey(municipalityId || "") }
@@ -32,9 +40,9 @@ export default function Result() {
   return (
     <div className="flex flex-col gap-6 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => setLocation("/")} className="px-0 hover:bg-transparent">
+        <Button variant="ghost" size="sm" onClick={() => setLocation(backPath)} className="px-0 hover:bg-transparent">
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {language === "ja" ? "別のアイテムを調べる" : "Search another item"}
+          {backLabel}
         </Button>
         {(lastResult.processingMode === "live" && confidenceScore < 100) && (
           <div className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider">
@@ -163,10 +171,10 @@ export default function Result() {
       <div className="mt-8 flex flex-col gap-3">
         <Button 
           className="w-full h-14 text-lg rounded-xl shadow-md font-bold"
-          onClick={() => setLocation("/")}
+          onClick={() => setLocation(backPath)}
         >
           <ArrowLeft className="mr-2 h-5 w-5" />
-          {language === "ja" ? "別のアイテムを調べる" : "Search Another Item"}
+          {backLabel}
         </Button>
 
         {municipality?.website && (
