@@ -1,42 +1,94 @@
-# GomiSense
+# GomiSense 🗑️✨
 
-GomiSense is a Japan-focused waste sorting assistant. It helps users identify how to dispose of household items based on local municipality rules. Users can select a municipality, search by item name, use voice input, or upload/take a photo. The backend returns the disposal category, preparation steps, notes, confidence score, and bilingual English/Japanese summaries.
+### Your Smart Companion for Japan's Waste Sorting.
 
-The project is designed to use Gemini API for multimodal classification: vision, voice-derived text, and typed text. Municipality rules are kept in local TypeScript data, so the app does not need a database.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
----
-
-## 🚀 What's New (Production Update)
-
-- **Hybrid AI Fallback**: When an item isn't in our local database, the AI now generates logical, context-aware disposal steps instead of simple summaries.
-- **Direct AI Search**: Users can now type or speak directly on the Home page search bar for instant AI classification results.
-- **Dedicated Camera Vision**: The "Scan" button now opens a focused Camera-Only page for easier photo capture and analysis.
-- **Local-First Fallbacks**: Added a local database of 200+ common items that loads instantly, even if the backend is waking up (eliminates blank loading states).
-- **Consolidated Navigation**: Removed the bottom nav and moved all controls (Search, Cities, Rules) to a fixed, sticky top header.
+GomiSense is a smart, local-first garbage-sorting assistant designed to solve a daily frustration for residents in Japan. By combining multimodal AI with specific municipality rules, it turns a complex chore into a seamless interaction.
 
 ---
 
-## What The Project Does
+## 🧩 The Challenge: Japan's Sorting Maze
 
-- Lets users choose a supported Japanese municipality.
-- Searches common waste items with debounced suggestions.
-- Classifies typed item names using Gemini plus local municipality rule guidance.
-- Accepts uploaded/captured images and uses Gemini Vision for item recognition before applying municipality rules.
-- Supports high-accuracy voice input powered by Groq Whisper.
-- Supports English and Japanese UI copy.
-- Shows disposal category, collection guidance, preparation steps, special notes, and confidence score.
-- Provides an OpenAPI spec used to generate React Query API hooks and Zod request/response validators.
+Waste sorting in Japan is famously exact, local, and often overwhelming. Rules vary significantly between wards and cities, and missing a detail can mean uncollected trash or confusion. This is particularly challenging for new residents, students, and busy families.
 
-## Tech Stack
+## 💡 The Solution: GomiSense
 
-- **Monorepo**: pnpm workspaces
-- **AI Models**: 
-  - **Gemini 2.5 Flash**: Image recognition, text classification, and grounding.
-- **Frontend**: React, Vite, Tailwind CSS, shadcn/ui, Wouter, TanStack Query
-- **Backend**: Express 5, Pino logging
-- **API Communication**: OpenAPI spec with generated React Query hooks and Zod validators.
+GomiSense provides intuitive AI-powered guidance that helps you sort waste correctly in seconds. Whether you're holding a mysterious plastic container or an old appliance, GomiSense tells you exactly where it goes.
 
-## Project Structure
+### 🚀 Key Features
+
+- **📸 Vision Scan**: Take a photo of any item. GomiSense identifies it and applies your local city's rules instantly.
+- **🎙️ Voice Recognition**: Just say the name of the item. Perfect for when your hands are full.
+- **📍 Hyper-Local Rules**: Tailored guidance for cities like **Shibuya**, **Osaka**, **Kyoto**, **Yokohama**, and **Fukuoka**.
+- **🌏 Bilingual UI**: Seamlessly switch between English and Japanese instructions.
+- **⚡ Hybrid Engine**: Combines a verified local rules database with high-performance AI for 100% coverage.
+
+---
+
+## 🛠️ How to Use GomiSense
+
+GomiSense is open-source and easy to set up for personal use or community deployment.
+
+### For Residents (App Users)
+1.  **Choose Your City**: Select your municipality from the header to load local rules.
+2.  **Identify Item**:
+    - **Search**: Type the item name in the search bar.
+    - **Scan**: Tap the camera icon to identify an item using AI vision.
+    - **Voice**: Tap the microphone to speak the item name.
+3.  **Follow Instructions**: Get clear steps on disposal categories (Burnable, Non-burnable, PET, etc.) and preparation tips (e.g., "Remove the cap and label").
+
+### For Developers (Local Setup)
+
+This project uses **pnpm workspaces** for a streamlined monorepo experience.
+
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/JacobAsir/GomiSense.git
+    cd GomiSense
+    ```
+
+2.  **Install Dependencies**
+    ```bash
+    pnpm install
+    ```
+
+3.  **Environment Configuration**
+    Create a `.env` file in the root directory. You will need a **Gemini API Key** from [Google AI Studio](https://aistudio.google.com/).
+    ```env
+    GEMINI_API_KEY=your_api_key_here
+    PORT=3001
+    ```
+
+4.  **Start Development Mode**
+    ```bash
+    pnpm dev
+    ```
+    Access the frontend at `http://localhost:5173` and the API at `http://localhost:3001`.
+
+---
+
+## 🏗️ Technical Architecture
+
+GomiSense uses a **Hybrid Knowledge Engine**. It first checks a verified local database of ~200+ common items for instant results. If an item isn't found, it leverages multimodal AI to classify the item based on the municipality's general logic.
+
+### Process Flow
+```mermaid
+graph TD
+    User([User]) -->|Search/Scan| Web[Vite Frontend]
+    Web -->|API Request| API[Express API Server]
+    API -->|1. Identify| AI[Multimodal AI Engine]
+    AI -->|Labels| Engine[Rules Engine]
+    Engine -->|Lookup| DB[(Local Rules DB)]
+    DB -->|Verified Rules| Result[Hybrid Result]
+    Engine -->|If Not Found| AI
+    AI -->|Generate Steps| Result
+    Result -->|JSON| API
+    API -->|Response| Web
+    Web -->|Display| User
+```
+
+## 📂 Project Structure
 
 ```text
 .
@@ -75,7 +127,7 @@ The project is designed to use Gemini API for multimodal classification: vision,
 +-- tsconfig*.json               # Shared TypeScript config
 ```
 
-## Main API Endpoints
+## 📡 Main API Endpoints
 
 All backend routes are mounted under `/api`.
 
@@ -89,7 +141,7 @@ All backend routes are mounted under `/api`.
 | `GET` | `/api/demo-samples` | Return demo/common sample items |
 | `GET` | `/api/search-items` | Search known item rules by name |
 
-## Environment Variables
+## 🔑 Environment Variables
 
 See `.env.example` for the local reference values and required API keys.
 
@@ -105,27 +157,17 @@ GomiSense is deployed as a two-service architecture on Render:
 
 The configuration is managed via the `render.yaml` file in the root directory.
 
-## Application Architecture
+## 🧰 Tech Stack
 
-GomiSense uses a **Hybrid Knowledge Engine** that combines a verified local rules database with advanced LLMs.
+- **Frontend**: React 18, Vite, Tailwind CSS, shadcn/ui, TanStack Query.
+- **Backend**: Express 5 (Node.js), Pino Logger.
+- **AI Integration**: Gemini 2.0 Flash (Multimodal Vision & Text).
+- **Voice**: Web Speech API / Groq Whisper.
+- **Tooling**: OpenAPI Spec, Orval (Type-safe API Hooks), Zod.
 
-### Process Flow
-```mermaid
-graph TD
-    User([User]) -->|Search/Scan| Web[Vite Frontend]
-    Web -->|API Request| API[Express API Server]
-    API -->|1. Identify| AI[Gemini 2.5 Flash]
-    AI -->|Labels| Engine[Rules Engine]
-    Engine -->|Lookup| DB[(Local Rules DB)]
-    DB -->|Verified Rules| Result[Hybrid Result]
-    Engine -->|If Not Found| AI
-    AI -->|Generate Steps| Result
-    Result -->|JSON| API
-    API -->|Response| Web
-    Web -->|Display| User
-```
+---
 
-## Supported Municipalities
+## 🏘️ Supported Municipalities (Expanding)
 
 - Tokyo, Shibuya Ward
 - Osaka City
@@ -133,4 +175,9 @@ graph TD
 - Yokohama City
 - Fukuoka City
 
-© 2026 GomiSense Team.
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+*Created with ❤️ for the international community in Japan.*
